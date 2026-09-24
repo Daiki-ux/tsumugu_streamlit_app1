@@ -196,10 +196,14 @@ def srcs(sources):
 
 
 def chips_html(tags, statics):
-    """担当者向けの予兆チップ。候補タグや「重なりに数える／数えない」など判定の仕組みの言葉は出さない（運営側の話。変更記録 CH-25）"""
+    """担当者向けの予兆チップ。候補タグや「重なりに数える／数えない」など判定の仕組みの言葉は出さない（運営側の話。変更記録 CH-25）
+    面談メモ由来の予兆には「最後に記録された時期」を添える。今も続いているかは担当者が確かめる（変更記録 CH-28）"""
     out = []
-    for t in tags:
-        out.append(f"<span class='chip' style='background:#FCF1DA;color:#8A5A12'>● {escape(t['name'])}</span>")
+    for t in sorted(tags, key=lambda t: max(x["date"] for x in t["sources"]), reverse=True):
+        last = max(t["sources"], key=lambda x: x["date"])
+        when = ym(last["date"]) + ("・未確認" if last.get("unconfirmed") else "")
+        out.append(f"<span class='chip' style='background:#FCF1DA;color:#8A5A12'>● {escape(t['name'])}"
+                   f"<span style='font-weight:500;font-size:11.5px'>（最後：{escape(when)}）</span></span>")
     for x in statics:
         out.append(f"<span class='chip' style='background:#EEF0F3;color:#44506A'>◆ {escape(x['text'])}</span>")
     return "".join(out) or f"<span style='color:{SUB};font-size:13px'>まだ予兆タグは付いていません</span>"
@@ -492,6 +496,11 @@ def page_company():
 
     c1, c2 = st.columns([1.1, 1], gap="medium")
     with c1:
+        years = tsumugu.RULES["gate"]["window_months"] // 12
+        st.markdown(f"<div class='card'><div class='hd'>これまでの記録に出てきた予兆（過去{years}年）</div>"
+                    f"<div class='note'>● 面談メモから（最後に記録された時期）　◆ 顧客データから。"
+                    f"今も続いているとは限りません。判定ではありません</div>"
+                    f"{chips_html(v['tags'], v['statics'])}</div>", unsafe_allow_html=True)
         summary = tsumugu.pre_visit_summary(cid, as_of=TODAY.isoformat(), limit=4)
         if summary:
             card("訪問前のまとめ（これまでの記録から）",
@@ -501,9 +510,6 @@ def page_company():
         if v["next_actions"]:
             card_questions(v["next_actions"]["questions"], "この訪問でお客さまに確かめること",
                            "社長や社員の方に。AI からの提案です。実際に何を聞くかは担当者が決めます")
-        st.markdown(f"<div class='card'><div class='hd'>検出された予兆タグ</div>"
-                    f"<div class='note'>● 面談メモから　　◆ 顧客データから</div>"
-                    f"{chips_html(v['tags'], v['statics'])}</div>", unsafe_allow_html=True)
     with c2:
         with st.container(height=640, border=False):
             card_memos(posts)
