@@ -1,0 +1,114 @@
+[
+  {
+    "case_id": "K001",
+    "year": 2022,
+    "branch": "前橋支店",
+    "industry": "金属加工",
+    "employee_band": "40〜49名",
+    "succession_type": "従業員承継",
+    "title": "工場長への代表交代と技術の文書化",
+    "outcome": "従業員承継。雇用と主要取引を維持",
+    "staff": [
+      "E008",
+      "E002"
+    ],
+    "tags": [
+      "後継者未定",
+      "技術継承の属人化"
+    ],
+    "visibility": "全行共有可"
+  },
+  {
+    "case_id": "K002",
+    "year": 2023,
+    "branch": "高崎支店",
+    "industry": "樹脂成形",
+    "employee_band": "20〜29名",
+    "succession_type": "第三者承継",
+    "title": "同業他社への事業譲渡",
+    "outcome": "県内同業への事業譲渡。従業員は全員移籍",
+    "staff": [
+      "E009",
+      "E007"
+    ],
+    "tags": [
+      "経営者の高齢化",
+      "設備投資の停滞"
+    ],
+    "visibility": "全行共有可"
+  },
+  {
+    "case_id": "K003",
+    "year": 2021,
+    "branch": "太田支店",
+    "industry": "精密部品",
+    "employee_band": "50〜99名",
+    "succession_type": "親族外承継",
+    "title": "役員へのMBOによる承継",
+    "outcome": "役員MBOで承継。技術者が定着",
+    "staff": [
+      "E002",
+      "E007"
+    ],
+    "tags": [
+      "後継者未定",
+      "技術継承の属人化",
+      "設備投資の停滞"
+    ],
+    "visibility": "全行共有可"
+  },
+  {
+    "case_id": "K004",
+    "year": 2024,
+    "branch": "館林支店",
+    "industry": "食品製造",
+    "employee_band": "10〜19名",
+    "succession_type": "廃業支援",
+    "title": "円滑な廃業と従業員の地域内再就職",
+    "outcome": "円滑な廃業。従業員は地域内で再就職",
+    "staff": [
+      "E007"
+    ],
+    "tags": [
+      "後継者未定",
+      "経営者の高齢化"
+    ],
+    "visibility": "全行共有可"
+  },
+  {
+    "case_id": "K005",
+    "year": 2023,
+    "branch": "太田支店",
+    "industry": "金属加工",
+    "employee_band": "30〜39名",
+    "succession_type": "親族承継",
+    "title": "子息のUターンによる承継",
+    "outcome": "子息が帰郷し承継。併走期間を設けて引継ぎ",
+    "staff": [
+      "E006",
+      "E007"
+    ],
+    "tags": [
+      "後継者未定"
+    ],
+    "visibility": "全行共有可"
+  },
+  {
+    "case_id": "K006",
+    "year": 2022,
+    "branch": "桐生支店",
+    "industry": "繊維",
+    "employee_band": "20〜29名",
+    "succession_type": "第三者承継",
+    "title": "伝統技術の承継先マッチング",
+    "outcome": "県外同業が譲受。職人が技術指導者として残留",
+    "staff": [
+      "E008"
+    ],
+    "tags": [
+      "技術継承の属人化",
+      "経営者の高齢化"
+    ],
+    "visibility": "全行共有可"
+  }
+]

@@ -1,0 +1,165 @@
+[
+  {
+    "employee_id": "E001",
+    "name": "佐々木 涼太",
+    "age": 28,
+    "branch": "太田支店",
+    "role": "法人担当",
+    "years": 5,
+    "joined_branch": "2026-04",
+    "persona": "若手。丁寧だが観察が浅い。です・ます調で短め。",
+    "history": "高崎支店 → 太田支店（2026年4月〜）",
+    "knowledge_areas": [],
+    "reports_to": "E004",
+    "access_scope": "assigned_companies"
+  },
+  {
+    "employee_id": "E002",
+    "name": "林 敏行",
+    "age": 52,
+    "branch": "法人営業部",
+    "role": "調査役",
+    "years": 29,
+    "joined_branch": "2025-04",
+    "persona": "ベテラン。観察が細かく、情景や表情まで書く。だ・である調と口語が混在。",
+    "history": "太田支店 法人担当（〜2025年3月）→ 法人営業部（2025年4月〜）",
+    "knowledge_areas": [
+      "事業承継",
+      "製造業",
+      "従業員承継"
+    ],
+    "reports_to": "E010",
+    "access_scope": "consulted"
+  },
+  {
+    "employee_id": "E003",
+    "name": "宮本 遥",
+    "age": 34,
+    "branch": "太田支店",
+    "role": "法人担当",
+    "years": 11,
+    "joined_branch": "2023-04",
+    "persona": "中堅。事実を淡々と箇条書き気味に。体言止めが多い。",
+    "history": "太田支店 法人担当。カナイ精工を2025年4月〜2026年3月に担当",
+    "knowledge_areas": [
+      "設備資金"
+    ],
+    "reports_to": "E004",
+    "access_scope": "assigned_companies"
+  },
+  {
+    "employee_id": "E004",
+    "name": "土屋 健吾",
+    "age": 45,
+    "branch": "太田支店",
+    "role": "支店長",
+    "years": 22,
+    "joined_branch": "2025-04",
+    "persona": "支店長。同行訪問時のみ投稿。大局的なコメント。",
+    "knowledge_areas": [
+      "経営改善"
+    ],
+    "history": "太田支店 支店長（2025年4月〜）",
+    "reports_to": null,
+    "access_scope": "branch"
+  },
+  {
+    "employee_id": "E005",
+    "name": "小池 直人",
+    "age": 25,
+    "branch": "太田支店",
+    "role": "法人担当",
+    "years": 3,
+    "joined_branch": "2024-04",
+    "persona": "若手。記録が短く、中身のないものも多い。",
+    "knowledge_areas": [],
+    "history": "",
+    "reports_to": "E004",
+    "access_scope": "assigned_companies"
+  },
+  {
+    "employee_id": "E006",
+    "name": "阿部 千尋",
+    "age": 39,
+    "branch": "太田支店",
+    "role": "法人担当",
+    "years": 16,
+    "joined_branch": "2021-04",
+    "persona": "中堅。経営者の心情に敏感。やや長文。",
+    "knowledge_areas": [
+      "創業支援"
+    ],
+    "history": "",
+    "reports_to": "E004",
+    "access_scope": "assigned_companies"
+  },
+  {
+    "employee_id": "E007",
+    "name": "大原 美和",
+    "age": 47,
+    "branch": "事業承継支援室",
+    "role": "室長代理",
+    "years": 24,
+    "joined_branch": "2020-04",
+    "persona": "本部専門職。支援方針を構造的に記述。",
+    "knowledge_areas": [
+      "事業承継",
+      "M&A",
+      "金属加工業",
+      "第三者承継"
+    ],
+    "history": "",
+    "reports_to": "E010",
+    "access_scope": "consulted"
+  },
+  {
+    "employee_id": "E008",
+    "name": "谷口 昌之",
+    "age": 56,
+    "branch": "前橋支店",
+    "role": "次長",
+    "years": 33,
+    "joined_branch": "2019-04",
+    "persona": "ベテラン。経験則で語る。",
+    "knowledge_areas": [
+      "事業承継",
+      "経営改善"
+    ],
+    "history": "",
+    "reports_to": null,
+    "access_scope": "assigned_companies"
+  },
+  {
+    "employee_id": "E009",
+    "name": "西野 亜紀",
+    "age": 31,
+    "branch": "高崎支店",
+    "role": "法人担当",
+    "years": 8,
+    "joined_branch": "2022-04",
+    "persona": "中堅。簡潔。",
+    "knowledge_areas": [
+      "樹脂成形業"
+    ],
+    "history": "",
+    "reports_to": null,
+    "access_scope": "assigned_companies"
+  },
+  {
+    "employee_id": "E010",
+    "name": "堀井 誠一",
+    "age": 60,
+    "branch": "法人営業部",
+    "role": "部長",
+    "years": 37,
+    "joined_branch": "2018-04",
+    "persona": "役員級。ほぼ投稿しない。",
+    "knowledge_areas": [
+      "事業承継",
+      "M&A"
+    ],
+    "history": "",
+    "reports_to": null,
+    "access_scope": "all"
+  }
+]

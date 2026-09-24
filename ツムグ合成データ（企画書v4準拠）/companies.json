@@ -1,0 +1,267 @@
+[
+  {
+    "company_id": "C001",
+    "name": "株式会社カナイ精工",
+    "category": "main",
+    "industry": "金属加工",
+    "established": 1974,
+    "employees": 38,
+    "branch": "太田支店",
+    "location": "群馬県太田市",
+    "ceo_name": "金井 健三",
+    "ceo_age": 72,
+    "successor_status": "未定",
+    "main_clients": [
+      "上州自動車部品株式会社",
+      "東毛プレス工業株式会社"
+    ],
+    "key_tech": "特殊薄板加工",
+    "note": "地域内で代替先が限られる薄板加工技術を保有",
+    "contacts": [
+      {
+        "name": "金井 健三",
+        "title": "代表取締役社長"
+      },
+      {
+        "name": "斎藤",
+        "title": "工場長"
+      }
+    ],
+    "support_status": "記録のみ"
+  },
+  {
+    "company_id": "C002",
+    "name": "太田電装株式会社",
+    "category": "emerging",
+    "industry": "電装部品",
+    "established": 1988,
+    "employees": 54,
+    "branch": "太田支店",
+    "location": "群馬県太田市",
+    "ceo_name": "諸井 康介",
+    "ceo_age": 68,
+    "successor_status": "検討中",
+    "main_clients": [
+      "北関東モータース株式会社"
+    ],
+    "key_tech": "ワイヤーハーネス組立",
+    "note": "娘婿が専務として在籍。承継意思は未確認",
+    "contacts": [
+      {
+        "name": "諸井 康介",
+        "title": "代表取締役社長"
+      },
+      {
+        "name": "諸井 拓也",
+        "title": "専務取締役（娘婿）"
+      }
+    ],
+    "support_status": "対話中"
+  },
+  {
+    "company_id": "C003",
+    "name": "有限会社スズキ木工所",
+    "category": "emerging",
+    "industry": "木工・建具",
+    "established": 1961,
+    "employees": 9,
+    "branch": "太田支店",
+    "location": "群馬県邑楽郡",
+    "ceo_name": "鈴木 正一",
+    "ceo_age": 75,
+    "successor_status": "未定",
+    "main_clients": [
+      "群馬住建株式会社"
+    ],
+    "key_tech": "社寺建築の造作",
+    "note": "職人2名が高齢。技術の継承先なし",
+    "contacts": [
+      {
+        "name": "鈴木 正一",
+        "title": "代表取締役"
+      }
+    ],
+    "support_status": "記録のみ"
+  },
+  {
+    "company_id": "C004",
+    "name": "株式会社上州フーズ",
+    "category": "normal",
+    "industry": "食品製造",
+    "established": 1995,
+    "employees": 76,
+    "branch": "太田支店",
+    "location": "群馬県太田市",
+    "ceo_name": "新井 直樹",
+    "ceo_age": 54,
+    "successor_status": "子息が入社済",
+    "main_clients": [
+      "関東スーパーマーケット協同組合"
+    ],
+    "key_tech": "惣菜製造",
+    "note": "",
+    "contacts": [
+      {
+        "name": "新井 直樹",
+        "title": "代表取締役社長"
+      },
+      {
+        "name": "新井 大輔",
+        "title": "製造部"
+      }
+    ],
+    "support_status": "記録のみ"
+  },
+  {
+    "company_id": "C005",
+    "name": "みどり運輸株式会社",
+    "category": "normal",
+    "industry": "運送",
+    "established": 1982,
+    "employees": 112,
+    "branch": "太田支店",
+    "location": "群馬県みどり市",
+    "ceo_name": "高野 一夫",
+    "ceo_age": 61,
+    "successor_status": "役員承継予定",
+    "main_clients": [
+      "上州自動車部品株式会社"
+    ],
+    "key_tech": "",
+    "note": "",
+    "contacts": [
+      {
+        "name": "高野 一夫",
+        "title": "代表取締役社長"
+      },
+      {
+        "name": "高野 健太",
+        "title": "常務取締役"
+      }
+    ],
+    "support_status": "記録のみ"
+  },
+  {
+    "company_id": "C006",
+    "name": "株式会社イセキ建設",
+    "category": "normal",
+    "industry": "建設",
+    "established": 1970,
+    "employees": 43,
+    "branch": "太田支店",
+    "location": "群馬県太田市",
+    "ceo_name": "井関 和彦",
+    "ceo_age": 58,
+    "successor_status": "子息が専務",
+    "main_clients": [],
+    "key_tech": "",
+    "note": "",
+    "contacts": [
+      {
+        "name": "井関 和彦",
+        "title": "代表取締役社長"
+      },
+      {
+        "name": "井関 健介",
+        "title": "専務取締役"
+      }
+    ],
+    "support_status": "記録のみ"
+  },
+  {
+    "company_id": "C007",
+    "name": "東毛メディカル株式会社",
+    "category": "normal",
+    "industry": "医療機器卸",
+    "established": 2003,
+    "employees": 28,
+    "branch": "太田支店",
+    "location": "群馬県太田市",
+    "ceo_name": "篠塚 亮",
+    "ceo_age": 49,
+    "successor_status": "未定",
+    "main_clients": [],
+    "key_tech": "",
+    "note": "経営者が若く、承継は当面の課題ではない",
+    "contacts": [
+      {
+        "name": "篠塚 亮",
+        "title": "代表取締役社長"
+      }
+    ],
+    "support_status": "記録のみ"
+  },
+  {
+    "company_id": "C008",
+    "name": "有限会社大川塗装",
+    "category": "normal",
+    "industry": "塗装",
+    "established": 1991,
+    "employees": 14,
+    "branch": "太田支店",
+    "location": "群馬県館林市",
+    "ceo_name": "大川 秀樹",
+    "ceo_age": 57,
+    "successor_status": "未定",
+    "main_clients": [
+      "株式会社イセキ建設"
+    ],
+    "key_tech": "",
+    "note": "",
+    "contacts": [
+      {
+        "name": "大川 秀樹",
+        "title": "代表取締役"
+      }
+    ],
+    "support_status": "記録のみ"
+  },
+  {
+    "company_id": "C009",
+    "name": "株式会社ヤマト化成",
+    "category": "positive",
+    "industry": "樹脂成形",
+    "established": 1979,
+    "employees": 67,
+    "branch": "太田支店",
+    "location": "群馬県太田市",
+    "ceo_name": "山戸 隆志",
+    "ceo_age": 53,
+    "successor_status": "未定",
+    "main_clients": [
+      "北関東モータース株式会社"
+    ],
+    "key_tech": "精密樹脂成形",
+    "note": "海外展開に強い関心",
+    "contacts": [
+      {
+        "name": "山戸 隆志",
+        "title": "代表取締役社長"
+      }
+    ],
+    "support_status": "記録のみ"
+  },
+  {
+    "company_id": "C010",
+    "name": "赤城アグリテック株式会社",
+    "category": "positive",
+    "industry": "農業機械",
+    "established": 2011,
+    "employees": 22,
+    "branch": "太田支店",
+    "location": "群馬県太田市",
+    "ceo_name": "室田 佳奈",
+    "ceo_age": 41,
+    "successor_status": "未定",
+    "main_clients": [],
+    "key_tech": "スマート農業システム",
+    "note": "成長企業。設備投資意欲が高い",
+    "contacts": [
+      {
+        "name": "室田 佳奈",
+        "title": "代表取締役社長"
+      }
+    ],
+    "support_status": "記録のみ"
+  }
+]

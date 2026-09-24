@@ -1,0 +1,128 @@
+[
+  {
+    "company_id": "C001",
+    "employee_id": "E002",
+    "from": "2019-04",
+    "to": "2025-03",
+    "role": "主担当"
+  },
+  {
+    "company_id": "C001",
+    "employee_id": "E003",
+    "from": "2025-04",
+    "to": "2026-03",
+    "role": "主担当"
+  },
+  {
+    "company_id": "C001",
+    "employee_id": "E001",
+    "from": "2026-04",
+    "to": null,
+    "role": "主担当"
+  },
+  {
+    "company_id": "C002",
+    "employee_id": "E006",
+    "from": "2021-04",
+    "to": "2025-12",
+    "role": "主担当"
+  },
+  {
+    "company_id": "C002",
+    "employee_id": "E003",
+    "from": "2026-01",
+    "to": null,
+    "role": "主担当"
+  },
+  {
+    "company_id": "C003",
+    "employee_id": "E006",
+    "from": "2021-04",
+    "to": null,
+    "role": "主担当"
+  },
+  {
+    "company_id": "C004",
+    "employee_id": "E003",
+    "from": "2023-04",
+    "to": null,
+    "role": "主担当"
+  },
+  {
+    "company_id": "C004",
+    "employee_id": "E005",
+    "from": "2025-04",
+    "to": null,
+    "role": "副担当"
+  },
+  {
+    "company_id": "C005",
+    "employee_id": "E006",
+    "from": "2021-04",
+    "to": null,
+    "role": "主担当"
+  },
+  {
+    "company_id": "C005",
+    "employee_id": "E005",
+    "from": "2025-04",
+    "to": null,
+    "role": "副担当"
+  },
+  {
+    "company_id": "C006",
+    "employee_id": "E006",
+    "from": "2021-04",
+    "to": null,
+    "role": "主担当"
+  },
+  {
+    "company_id": "C006",
+    "employee_id": "E005",
+    "from": "2024-04",
+    "to": null,
+    "role": "副担当"
+  },
+  {
+    "company_id": "C007",
+    "employee_id": "E003",
+    "from": "2023-04",
+    "to": null,
+    "role": "主担当"
+  },
+  {
+    "company_id": "C007",
+    "employee_id": "E005",
+    "from": "2024-04",
+    "to": null,
+    "role": "副担当"
+  },
+  {
+    "company_id": "C008",
+    "employee_id": "E006",
+    "from": "2021-04",
+    "to": null,
+    "role": "主担当"
+  },
+  {
+    "company_id": "C008",
+    "employee_id": "E005",
+    "from": "2024-04",
+    "to": null,
+    "role": "副担当"
+  },
+  {
+    "company_id": "C009",
+    "employee_id": "E006",
+    "from": "2021-04",
+    "to": null,
+    "role": "主担当"
+  },
+  {
+    "company_id": "C010",
+    "employee_id": "E003",
+    "from": "2023-04",
+    "to": null,
+    "role": "主担当"
+  }
+]

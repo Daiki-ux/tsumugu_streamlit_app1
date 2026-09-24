@@ -1,0 +1,42 @@
+[
+  {
+    "consultation_id": "CS001",
+    "date": "2021-06-10",
+    "from_employee": "E002",
+    "to_employee": "E007",
+    "to_department": "事業承継支援室",
+    "company_id": null,
+    "case_id": "K003",
+    "theme": "子息が承継を辞退した精密部品メーカーの役員MBO"
+  },
+  {
+    "consultation_id": "CS002",
+    "date": "2022-03-15",
+    "from_employee": "E008",
+    "to_employee": "E002",
+    "to_department": "太田支店",
+    "company_id": null,
+    "case_id": "K001",
+    "theme": "工場長への承継と、加工技術の文書化の進め方"
+  },
+  {
+    "consultation_id": "CS003",
+    "date": "2023-05-22",
+    "from_employee": "E006",
+    "to_employee": "E007",
+    "to_department": "事業承継支援室",
+    "company_id": null,
+    "case_id": "K005",
+    "theme": "県外勤務の子息のUターンによる承継"
+  },
+  {
+    "consultation_id": "CS004",
+    "date": "2026-07-02",
+    "from_employee": "E003",
+    "to_employee": "E007",
+    "to_department": "事業承継支援室",
+    "company_id": "C002",
+    "case_id": null,
+    "theme": "専務（娘婿）への承継意向の確かめ方"
+  }
+]

@@ -1,0 +1,1721 @@
+{
+  "_comment": "もっちゃんの『ツムグ合成データ（企画書v4準拠）』から docs/convert_source_data.py で生成。すべて架空。ID は元データのまま（C001 / E001 / R0001 / K001）。reference_tags は答え合わせ用なのでここには入れない。kind=case_detail（cases.json）は閲覧制限ありのため検索索引にも画面にも出さない（企画書 v4 §12.3）。kind=knowhow（H-xxx）は ⑦ の確認事項に使う補助データで、もっちゃんのセットには無い（ゆき作成）。",
+  "companies": [
+    {
+      "id": "C001",
+      "name": "株式会社カナイ精工",
+      "industry": "金属加工",
+      "founded_year": 1974,
+      "employees": 38,
+      "owner_name": "金井 健三",
+      "owner_age": 72,
+      "key_customers": "上州自動車部品株式会社、東毛プレス工業株式会社",
+      "dependency": "main",
+      "region": "群馬県太田市",
+      "branch": "太田支店",
+      "tech_note": "特殊薄板加工／地域内で代替先が限られる薄板加工技術を保有",
+      "successor_status": "未定",
+      "support_status": "記録のみ"
+    },
+    {
+      "id": "C002",
+      "name": "太田電装株式会社",
+      "industry": "電装部品",
+      "founded_year": 1988,
+      "employees": 54,
+      "owner_name": "諸井 康介",
+      "owner_age": 68,
+      "key_customers": "北関東モータース株式会社",
+      "dependency": "emerging",
+      "region": "群馬県太田市",
+      "branch": "太田支店",
+      "tech_note": "ワイヤーハーネス組立／娘婿が専務として在籍。承継意思は未確認",
+      "successor_status": "検討中",
+      "support_status": "対話中"
+    },
+    {
+      "id": "C003",
+      "name": "有限会社スズキ木工所",
+      "industry": "木工・建具",
+      "founded_year": 1961,
+      "employees": 9,
+      "owner_name": "鈴木 正一",
+      "owner_age": 75,
+      "key_customers": "群馬住建株式会社",
+      "dependency": "emerging",
+      "region": "群馬県邑楽郡",
+      "branch": "太田支店",
+      "tech_note": "社寺建築の造作／職人2名が高齢。技術の継承先なし",
+      "successor_status": "未定",
+      "support_status": "記録のみ"
+    },
+    {
+      "id": "C004",
+      "name": "株式会社上州フーズ",
+      "industry": "食品製造",
+      "founded_year": 1995,
+      "employees": 76,
+      "owner_name": "新井 直樹",
+      "owner_age": 54,
+      "key_customers": "関東スーパーマーケット協同組合",
+      "dependency": "normal",
+      "region": "群馬県太田市",
+      "branch": "太田支店",
+      "tech_note": "惣菜製造",
+      "successor_status": "子息が入社済",
+      "support_status": "記録のみ"
+    },
+    {
+      "id": "C005",
+      "name": "みどり運輸株式会社",
+      "industry": "運送",
+      "founded_year": 1982,
+      "employees": 112,
+      "owner_name": "高野 一夫",
+      "owner_age": 61,
+      "key_customers": "上州自動車部品株式会社",
+      "dependency": "normal",
+      "region": "群馬県みどり市",
+      "branch": "太田支店",
+      "tech_note": "",
+      "successor_status": "役員承継予定",
+      "support_status": "記録のみ"
+    },
+    {
+      "id": "C006",
+      "name": "株式会社イセキ建設",
+      "industry": "建設",
+      "founded_year": 1970,
+      "employees": 43,
+      "owner_name": "井関 和彦",
+      "owner_age": 58,
+      "key_customers": "",
+      "dependency": "normal",
+      "region": "群馬県太田市",
+      "branch": "太田支店",
+      "tech_note": "",
+      "successor_status": "子息が専務",
+      "support_status": "記録のみ"
+    },
+    {
+      "id": "C007",
+      "name": "東毛メディカル株式会社",
+      "industry": "医療機器卸",
+      "founded_year": 2003,
+      "employees": 28,
+      "owner_name": "篠塚 亮",
+      "owner_age": 49,
+      "key_customers": "",
+      "dependency": "normal",
+      "region": "群馬県太田市",
+      "branch": "太田支店",
+      "tech_note": "",
+      "successor_status": "未定",
+      "support_status": "記録のみ"
+    },
+    {
+      "id": "C008",
+      "name": "有限会社大川塗装",
+      "industry": "塗装",
+      "founded_year": 1991,
+      "employees": 14,
+      "owner_name": "大川 秀樹",
+      "owner_age": 57,
+      "key_customers": "株式会社イセキ建設",
+      "dependency": "normal",
+      "region": "群馬県館林市",
+      "branch": "太田支店",
+      "tech_note": "",
+      "successor_status": "未定",
+      "support_status": "記録のみ"
+    },
+    {
+      "id": "C009",
+      "name": "株式会社ヤマト化成",
+      "industry": "樹脂成形",
+      "founded_year": 1979,
+      "employees": 67,
+      "owner_name": "山戸 隆志",
+      "owner_age": 53,
+      "key_customers": "北関東モータース株式会社",
+      "dependency": "positive",
+      "region": "群馬県太田市",
+      "branch": "太田支店",
+      "tech_note": "精密樹脂成形／海外展開に強い関心",
+      "successor_status": "未定",
+      "support_status": "記録のみ"
+    },
+    {
+      "id": "C010",
+      "name": "赤城アグリテック株式会社",
+      "industry": "農業機械",
+      "founded_year": 2011,
+      "employees": 22,
+      "owner_name": "室田 佳奈",
+      "owner_age": 41,
+      "key_customers": "",
+      "dependency": "positive",
+      "region": "群馬県太田市",
+      "branch": "太田支店",
+      "tech_note": "スマート農業システム／成長企業。設備投資意欲が高い",
+      "successor_status": "未定",
+      "support_status": "記録のみ"
+    }
+  ],
+  "contacts": [
+    {
+      "id": "C001-P1",
+      "company_id": "C001",
+      "name": "金井 健三",
+      "role": "代表取締役社長"
+    },
+    {
+      "id": "C001-P2",
+      "company_id": "C001",
+      "name": "斎藤",
+      "role": "工場長"
+    },
+    {
+      "id": "C002-P1",
+      "company_id": "C002",
+      "name": "諸井 康介",
+      "role": "代表取締役社長"
+    },
+    {
+      "id": "C002-P2",
+      "company_id": "C002",
+      "name": "諸井 拓也",
+      "role": "専務取締役（娘婿）"
+    },
+    {
+      "id": "C003-P1",
+      "company_id": "C003",
+      "name": "鈴木 正一",
+      "role": "代表取締役"
+    },
+    {
+      "id": "C004-P1",
+      "company_id": "C004",
+      "name": "新井 直樹",
+      "role": "代表取締役社長"
+    },
+    {
+      "id": "C004-P2",
+      "company_id": "C004",
+      "name": "新井 大輔",
+      "role": "製造部"
+    },
+    {
+      "id": "C005-P1",
+      "company_id": "C005",
+      "name": "高野 一夫",
+      "role": "代表取締役社長"
+    },
+    {
+      "id": "C005-P2",
+      "company_id": "C005",
+      "name": "高野 健太",
+      "role": "常務取締役"
+    },
+    {
+      "id": "C006-P1",
+      "company_id": "C006",
+      "name": "井関 和彦",
+      "role": "代表取締役社長"
+    },
+    {
+      "id": "C006-P2",
+      "company_id": "C006",
+      "name": "井関 健介",
+      "role": "専務取締役"
+    },
+    {
+      "id": "C007-P1",
+      "company_id": "C007",
+      "name": "篠塚 亮",
+      "role": "代表取締役社長"
+    },
+    {
+      "id": "C008-P1",
+      "company_id": "C008",
+      "name": "大川 秀樹",
+      "role": "代表取締役"
+    },
+    {
+      "id": "C009-P1",
+      "company_id": "C009",
+      "name": "山戸 隆志",
+      "role": "代表取締役社長"
+    },
+    {
+      "id": "C010-P1",
+      "company_id": "C010",
+      "name": "室田 佳奈",
+      "role": "代表取締役社長"
+    }
+  ],
+  "staff": [
+    {
+      "id": "E001",
+      "name": "佐々木 涼太",
+      "dept": "太田支店",
+      "branch": "太田支店",
+      "role": "法人担当",
+      "expertise_tags": [],
+      "reports_to": "E004",
+      "access_scope": "assigned_companies"
+    },
+    {
+      "id": "E002",
+      "name": "林 敏行",
+      "dept": "法人営業部",
+      "branch": "法人営業部",
+      "role": "調査役",
+      "expertise_tags": [
+        "事業承継",
+        "製造業",
+        "従業員承継"
+      ],
+      "reports_to": "E010",
+      "access_scope": "consulted"
+    },
+    {
+      "id": "E003",
+      "name": "宮本 遥",
+      "dept": "太田支店",
+      "branch": "太田支店",
+      "role": "法人担当",
+      "expertise_tags": [
+        "設備資金"
+      ],
+      "reports_to": "E004",
+      "access_scope": "assigned_companies"
+    },
+    {
+      "id": "E004",
+      "name": "土屋 健吾",
+      "dept": "太田支店",
+      "branch": "太田支店",
+      "role": "支店長",
+      "expertise_tags": [
+        "経営改善"
+      ],
+      "reports_to": null,
+      "access_scope": "branch"
+    },
+    {
+      "id": "E005",
+      "name": "小池 直人",
+      "dept": "太田支店",
+      "branch": "太田支店",
+      "role": "法人担当",
+      "expertise_tags": [],
+      "reports_to": "E004",
+      "access_scope": "assigned_companies"
+    },
+    {
+      "id": "E006",
+      "name": "阿部 千尋",
+      "dept": "太田支店",
+      "branch": "太田支店",
+      "role": "法人担当",
+      "expertise_tags": [
+        "創業支援"
+      ],
+      "reports_to": "E004",
+      "access_scope": "assigned_companies"
+    },
+    {
+      "id": "E007",
+      "name": "大原 美和",
+      "dept": "事業承継支援室",
+      "branch": "事業承継支援室",
+      "role": "室長代理",
+      "expertise_tags": [
+        "事業承継",
+        "M&A",
+        "金属加工業",
+        "第三者承継"
+      ],
+      "reports_to": "E010",
+      "access_scope": "consulted"
+    },
+    {
+      "id": "E008",
+      "name": "谷口 昌之",
+      "dept": "前橋支店",
+      "branch": "前橋支店",
+      "role": "次長",
+      "expertise_tags": [
+        "事業承継",
+        "経営改善"
+      ],
+      "reports_to": null,
+      "access_scope": "assigned_companies"
+    },
+    {
+      "id": "E009",
+      "name": "西野 亜紀",
+      "dept": "高崎支店",
+      "branch": "高崎支店",
+      "role": "法人担当",
+      "expertise_tags": [
+        "樹脂成形業"
+      ],
+      "reports_to": null,
+      "access_scope": "assigned_companies"
+    },
+    {
+      "id": "E010",
+      "name": "堀井 誠一",
+      "dept": "法人営業部",
+      "branch": "法人営業部",
+      "role": "部長",
+      "expertise_tags": [
+        "事業承継",
+        "M&A"
+      ],
+      "reports_to": null,
+      "access_scope": "all"
+    }
+  ],
+  "assignments": [
+    {
+      "company_id": "C001",
+      "staff_id": "E002",
+      "from_date": "2019-04-01",
+      "to_date": "2025-03-31",
+      "role": "主担当"
+    },
+    {
+      "company_id": "C001",
+      "staff_id": "E003",
+      "from_date": "2025-04-01",
+      "to_date": "2026-03-31",
+      "role": "主担当"
+    },
+    {
+      "company_id": "C001",
+      "staff_id": "E001",
+      "from_date": "2026-04-01",
+      "to_date": null,
+      "role": "主担当"
+    },
+    {
+      "company_id": "C002",
+      "staff_id": "E006",
+      "from_date": "2021-04-01",
+      "to_date": "2025-12-31",
+      "role": "主担当"
+    },
+    {
+      "company_id": "C002",
+      "staff_id": "E003",
+      "from_date": "2026-01-01",
+      "to_date": null,
+      "role": "主担当"
+    },
+    {
+      "company_id": "C003",
+      "staff_id": "E006",
+      "from_date": "2021-04-01",
+      "to_date": null,
+      "role": "主担当"
+    },
+    {
+      "company_id": "C004",
+      "staff_id": "E003",
+      "from_date": "2023-04-01",
+      "to_date": null,
+      "role": "主担当"
+    },
+    {
+      "company_id": "C004",
+      "staff_id": "E005",
+      "from_date": "2025-04-01",
+      "to_date": null,
+      "role": "副担当"
+    },
+    {
+      "company_id": "C005",
+      "staff_id": "E006",
+      "from_date": "2021-04-01",
+      "to_date": null,
+      "role": "主担当"
+    },
+    {
+      "company_id": "C005",
+      "staff_id": "E005",
+      "from_date": "2025-04-01",
+      "to_date": null,
+      "role": "副担当"
+    },
+    {
+      "company_id": "C006",
+      "staff_id": "E006",
+      "from_date": "2021-04-01",
+      "to_date": null,
+      "role": "主担当"
+    },
+    {
+      "company_id": "C006",
+      "staff_id": "E005",
+      "from_date": "2024-04-01",
+      "to_date": null,
+      "role": "副担当"
+    },
+    {
+      "company_id": "C007",
+      "staff_id": "E003",
+      "from_date": "2023-04-01",
+      "to_date": null,
+      "role": "主担当"
+    },
+    {
+      "company_id": "C007",
+      "staff_id": "E005",
+      "from_date": "2024-04-01",
+      "to_date": null,
+      "role": "副担当"
+    },
+    {
+      "company_id": "C008",
+      "staff_id": "E006",
+      "from_date": "2021-04-01",
+      "to_date": null,
+      "role": "主担当"
+    },
+    {
+      "company_id": "C008",
+      "staff_id": "E005",
+      "from_date": "2024-04-01",
+      "to_date": null,
+      "role": "副担当"
+    },
+    {
+      "company_id": "C009",
+      "staff_id": "E006",
+      "from_date": "2021-04-01",
+      "to_date": null,
+      "role": "主担当"
+    },
+    {
+      "company_id": "C010",
+      "staff_id": "E003",
+      "from_date": "2023-04-01",
+      "to_date": null,
+      "role": "主担当"
+    }
+  ],
+  "consultations": [
+    {
+      "id": "CS001",
+      "at": "2021-06-10",
+      "from_staff": "E002",
+      "to_staff": "E007",
+      "to_dept": "事業承継支援室",
+      "company_id": null,
+      "case_id": "K003",
+      "theme": "子息が承継を辞退した精密部品メーカーの役員MBO"
+    },
+    {
+      "id": "CS002",
+      "at": "2022-03-15",
+      "from_staff": "E008",
+      "to_staff": "E002",
+      "to_dept": "太田支店",
+      "company_id": null,
+      "case_id": "K001",
+      "theme": "工場長への承継と、加工技術の文書化の進め方"
+    },
+    {
+      "id": "CS003",
+      "at": "2023-05-22",
+      "from_staff": "E006",
+      "to_staff": "E007",
+      "to_dept": "事業承継支援室",
+      "company_id": null,
+      "case_id": "K005",
+      "theme": "県外勤務の子息のUターンによる承継"
+    },
+    {
+      "id": "CS004",
+      "at": "2026-07-02",
+      "from_staff": "E003",
+      "to_staff": "E007",
+      "to_dept": "事業承継支援室",
+      "company_id": "C002",
+      "case_id": null,
+      "theme": "専務（娘婿）への承継意向の確かめ方"
+    }
+  ],
+  "posts": [
+    {
+      "id": "R0001",
+      "company_id": "C001",
+      "author_id": "E002",
+      "contact_id": "C001-P1",
+      "posted_at": "2024-04-18",
+      "text": "期末の挨拶で訪問。受注は堅調とのこと。工場を一通り見せてもらった。",
+      "source_label": "過去日報（導入時に取り込み）"
+    },
+    {
+      "id": "R0002",
+      "company_id": "C004",
+      "author_id": "E003",
+      "contact_id": "C004-P1",
+      "posted_at": "2024-04-25",
+      "text": "新井社長と面談。新工場ラインの稼働が順調とのこと。",
+      "source_label": "過去日報（導入時に取り込み）"
+    },
+    {
+      "id": "R0003",
+      "company_id": "C003",
+      "author_id": "E006",
+      "contact_id": "C003-P1",
+      "posted_at": "2024-05-09",
+      "text": "鈴木社長と面談。社寺の仕事が続いており、手は空かないとのこと。",
+      "source_label": "過去日報（導入時に取り込み）"
+    },
+    {
+      "id": "R0004",
+      "company_id": "C006",
+      "author_id": "E005",
+      "contact_id": "C006-P1",
+      "posted_at": "2024-05-16",
+      "text": "井関社長にご挨拶。",
+      "source_label": "過去日報（導入時に取り込み）"
+    },
+    {
+      "id": "R0005",
+      "company_id": "C001",
+      "author_id": "E002",
+      "contact_id": "C001-P1",
+      "posted_at": "2024-05-23",
+      "text": "社長、息子さんの話題になると少し歯切れが悪い。県外でIT系に勤めているとのこと。「継ぐ気はないでしょうね」と笑っていたが、少し寂しそうだった。",
+      "source_label": "過去日報（導入時に取り込み）"
+    },
+    {
+      "id": "R0006",
+      "company_id": "C002",
+      "author_id": "E006",
+      "contact_id": "C002-P1",
+      "posted_at": "2024-06-11",
+      "text": "諸井社長と面談。娘婿の専務が現場をよく見ている印象。社長も頼りにしている様子でした。",
+      "source_label": "過去日報（導入時に取り込み）"
+    },
+    {
+      "id": "R0007",
+      "company_id": "C005",
+      "author_id": "E006",
+      "contact_id": "C005-P1",
+      "posted_at": "2024-06-20",
+      "text": "高野社長と面談。ドライバー不足が続くが、待遇改善で定着率は改善傾向とのこと。",
+      "source_label": "過去日報（導入時に取り込み）"
+    },
+    {
+      "id": "R0008",
+      "company_id": "C001",
+      "author_id": "E002",
+      "contact_id": "C001-P1",
+      "posted_at": "2024-07-09",
+      "text": "上州自動車部品向けの薄板加工、今期も安定して回っている様子。",
+      "source_label": "過去日報（導入時に取り込み）"
+    },
+    {
+      "id": "R0009",
+      "company_id": "C007",
+      "author_id": "E005",
+      "contact_id": "C007-P1",
+      "posted_at": "2024-07-18",
+      "text": "篠塚社長と面談しました。",
+      "source_label": "過去日報（導入時に取り込み）"
+    },
+    {
+      "id": "R0010",
+      "company_id": "C004",
+      "author_id": "E003",
+      "contact_id": "C004-P1",
+      "posted_at": "2024-08-22",
+      "text": "夏場の惣菜需要が好調。人手確保が課題とのこと。",
+      "source_label": "過去日報（導入時に取り込み）"
+    },
+    {
+      "id": "R0011",
+      "company_id": "C008",
+      "author_id": "E005",
+      "contact_id": "C008-P1",
+      "posted_at": "2024-08-29",
+      "text": "大川社長にご挨拶。",
+      "source_label": "過去日報（導入時に取り込み）"
+    },
+    {
+      "id": "R0012",
+      "company_id": "C001",
+      "author_id": "E002",
+      "contact_id": "C001-P1",
+      "posted_at": "2024-09-05",
+      "text": "運転資金の折り返し相談。特段の懸念なし。",
+      "source_label": "過去日報（導入時に取り込み）"
+    },
+    {
+      "id": "R0013",
+      "company_id": "C009",
+      "author_id": "E006",
+      "contact_id": "C009-P1",
+      "posted_at": "2024-09-12",
+      "text": "山戸社長と面談。精密成形の技術力で差別化できているとのこと。",
+      "source_label": "過去日報（導入時に取り込み）"
+    },
+    {
+      "id": "R0014",
+      "company_id": "C003",
+      "author_id": "E006",
+      "contact_id": "C003-P1",
+      "posted_at": "2024-09-26",
+      "text": "職人の高橋さん（71）と田村さん（68）の2人で造作をこなしている。若手は募集しても続かないと社長がこぼしていました。",
+      "source_label": "過去日報（導入時に取り込み）"
+    },
+    {
+      "id": "R0015",
+      "company_id": "C002",
+      "author_id": "E006",
+      "contact_id": "C002-P1",
+      "posted_at": "2024-10-08",
+      "text": "北関東モータース向けの受注、EV化の影響で品目構成が変わりつつあるとのこと。",
+      "source_label": "過去日報（導入時に取り込み）"
+    },
+    {
+      "id": "R0016",
+      "company_id": "C006",
+      "author_id": "E006",
+      "contact_id": "C006-P1",
+      "posted_at": "2024-10-24",
+      "text": "公共工事の受注が堅調。専務の井関健介氏が現場を統括。",
+      "source_label": "過去日報（導入時に取り込み）"
+    },
+    {
+      "id": "R0017",
+      "company_id": "C010",
+      "author_id": "E003",
+      "contact_id": "C010-P1",
+      "posted_at": "2024-10-30",
+      "text": "室田社長と面談。スマート農業システムの引き合いが増えているとのこと。",
+      "source_label": "過去日報（導入時に取り込み）"
+    },
+    {
+      "id": "R0018",
+      "company_id": "C005",
+      "author_id": "E006",
+      "contact_id": "C005-P1",
+      "posted_at": "2024-11-07",
+      "text": "車両更新の相談。5台。",
+      "source_label": "過去日報（導入時に取り込み）"
+    },
+    {
+      "id": "R0019",
+      "company_id": "C001",
+      "author_id": "E002",
+      "contact_id": "C001-P2",
+      "posted_at": "2024-11-14",
+      "text": "工場長の斎藤さん（64）が「あと何年やれるかな」と。薄板の加工は斎藤さんの手作業の勘に頼っている部分が大きいらしい。",
+      "source_label": "過去日報（導入時に取り込み）"
+    },
+    {
+      "id": "R0020",
+      "company_id": "C007",
+      "author_id": "E003",
+      "contact_id": "C007-P1",
+      "posted_at": "2024-12-05",
+      "text": "医療機関向け販売が堅調。",
+      "source_label": "過去日報（導入時に取り込み）"
+    },
+    {
+      "id": "R0021",
+      "company_id": "C004",
+      "author_id": "E003",
+      "contact_id": "C004-P1",
+      "posted_at": "2024-12-12",
+      "text": "子息の新井大輔氏（29）が入社。製造部門からスタートとのこと。",
+      "source_label": "過去日報（導入時に取り込み）"
+    },
+    {
+      "id": "R0022",
+      "company_id": "C003",
+      "author_id": "E006",
+      "contact_id": "C003-P1",
+      "posted_at": "2025-01-16",
+      "text": "年始挨拶。仕事は3ヶ月先まで埋まっているとのこと。",
+      "source_label": "過去日報（導入時に取り込み）"
+    },
+    {
+      "id": "R0023",
+      "company_id": "C001",
+      "author_id": "E002",
+      "contact_id": "C001-P1",
+      "posted_at": "2025-01-21",
+      "text": "年始挨拶。社長は例年より口数が少なかった気がする。体調のことを聞いたが「問題ない」とのこと。",
+      "source_label": "過去日報（導入時に取り込み）"
+    },
+    {
+      "id": "R0024",
+      "company_id": "C008",
+      "author_id": "E006",
+      "contact_id": "C008-P1",
+      "posted_at": "2025-01-30",
+      "text": "イセキ建設からの受注が中心。安定しているとのこと。",
+      "source_label": "過去日報（導入時に取り込み）"
+    },
+    {
+      "id": "R0025",
+      "company_id": "C006",
+      "author_id": "E006",
+      "contact_id": "C006-P1",
+      "posted_at": "2025-02-06",
+      "text": "決算資料受領。",
+      "source_label": "過去日報（導入時に取り込み）"
+    },
+    {
+      "id": "R0026",
+      "company_id": "C002",
+      "author_id": "E006",
+      "contact_id": "C002-P1",
+      "posted_at": "2025-02-13",
+      "text": "社長、専務の承継については「本人次第だな」と。娘婿ということもあり、踏み込んだ話はしづらい様子でした。",
+      "source_label": "過去日報（導入時に取り込み）"
+    },
+    {
+      "id": "R0027",
+      "company_id": "C009",
+      "author_id": "E006",
+      "contact_id": "C009-P1",
+      "posted_at": "2025-02-27",
+      "text": "北関東モータース向けの受注が増加傾向。",
+      "source_label": "過去日報（導入時に取り込み）"
+    },
+    {
+      "id": "R0028",
+      "company_id": "C001",
+      "author_id": "E002",
+      "contact_id": "C001-P1",
+      "posted_at": "2025-03-12",
+      "text": "担当交代の挨拶。長らくお世話になりました、と社長から。",
+      "source_label": "過去日報（導入時に取り込み）"
+    },
+    {
+      "id": "R0029",
+      "company_id": "C005",
+      "author_id": "E006",
+      "contact_id": "C005-P1",
+      "posted_at": "2025-03-19",
+      "text": "車両納車済み。",
+      "source_label": "過去日報（導入時に取り込み）"
+    },
+    {
+      "id": "R0030",
+      "company_id": "C010",
+      "author_id": "E003",
+      "contact_id": "C010-P1",
+      "posted_at": "2025-03-26",
+      "text": "開発人員を3名増強したとのこと。",
+      "source_label": "過去日報（導入時に取り込み）"
+    },
+    {
+      "id": "R0031",
+      "company_id": "C004",
+      "author_id": "E003",
+      "contact_id": "C004-P1",
+      "posted_at": "2025-04-10",
+      "text": "決算資料受領。増収増益。",
+      "source_label": "過去日報（導入時に取り込み）"
+    },
+    {
+      "id": "R0032",
+      "company_id": "C001",
+      "author_id": "E003",
+      "contact_id": "C001-P1",
+      "posted_at": "2025-04-15",
+      "text": "担当交代の挨拶。工場見学。設備は古いが手入れは行き届いている印象。",
+      "source_label": "過去日報（導入時に取り込み）"
+    },
+    {
+      "id": "R0033",
+      "company_id": "C007",
+      "author_id": "E003",
+      "contact_id": "C007-P1",
+      "posted_at": "2025-05-08",
+      "text": "決算資料受領。増収。",
+      "source_label": "過去日報（導入時に取り込み）"
+    },
+    {
+      "id": "R0034",
+      "company_id": "C002",
+      "author_id": "E006",
+      "contact_id": "C002-P1",
+      "posted_at": "2025-05-20",
+      "text": "設備資金のご相談。検査装置の更新を検討中。",
+      "source_label": "過去日報（導入時に取り込み）"
+    },
+    {
+      "id": "R0035",
+      "company_id": "C001",
+      "author_id": "E003",
+      "contact_id": "C001-P1",
+      "posted_at": "2025-06-03",
+      "text": "決算資料受領。増収増益。",
+      "source_label": "過去日報（導入時に取り込み）"
+    },
+    {
+      "id": "R0036",
+      "company_id": "C003",
+      "author_id": "E006",
+      "contact_id": "C003-P1",
+      "posted_at": "2025-06-05",
+      "text": "工場の屋根修繕の相談。少額。",
+      "source_label": "過去日報（導入時に取り込み）"
+    },
+    {
+      "id": "R0037",
+      "company_id": "C006",
+      "author_id": "E005",
+      "contact_id": "C006-P1",
+      "posted_at": "2025-06-26",
+      "text": "訪問。特になし。",
+      "source_label": "過去日報（導入時に取り込み）"
+    },
+    {
+      "id": "R0038",
+      "company_id": "C008",
+      "author_id": "E005",
+      "contact_id": "C008-P1",
+      "posted_at": "2025-07-10",
+      "text": "訪問しました。",
+      "source_label": "過去日報（導入時に取り込み）"
+    },
+    {
+      "id": "R0039",
+      "company_id": "C005",
+      "author_id": "E005",
+      "contact_id": "C005-P1",
+      "posted_at": "2025-07-31",
+      "text": "訪問しました。",
+      "source_label": "過去日報（導入時に取り込み）"
+    },
+    {
+      "id": "R0040",
+      "company_id": "C004",
+      "author_id": "E005",
+      "contact_id": "C004-P1",
+      "posted_at": "2025-08-07",
+      "text": "同行訪問。工場見学しました。",
+      "source_label": "過去日報（導入時に取り込み）"
+    },
+    {
+      "id": "R0041",
+      "company_id": "C009",
+      "author_id": "E006",
+      "contact_id": "C009-P1",
+      "posted_at": "2025-08-14",
+      "text": "社長が最近、東南アジアの展示会の話をよくされる。「タイあたりに拠点を持てないかと考えている」とのこと。",
+      "source_label": "過去日報（導入時に取り込み）"
+    },
+    {
+      "id": "R0042",
+      "company_id": "C001",
+      "author_id": "E003",
+      "contact_id": "C001-P1",
+      "posted_at": "2025-08-27",
+      "text": "訪問。特記事項なし。",
+      "source_label": "過去日報（導入時に取り込み）"
+    },
+    {
+      "id": "R0043",
+      "company_id": "C002",
+      "author_id": "E006",
+      "contact_id": "C002-P1",
+      "posted_at": "2025-09-02",
+      "text": "検査装置の件、稟議通過。据付は年内予定。",
+      "source_label": "過去日報（導入時に取り込み）"
+    },
+    {
+      "id": "R0044",
+      "company_id": "C010",
+      "author_id": "E003",
+      "contact_id": "C010-P1",
+      "posted_at": "2025-09-10",
+      "text": "社長が「県外の農業法人からも問い合わせが来ている」と。事業拡大の構想を熱心に話されていた。",
+      "source_label": "過去日報（導入時に取り込み）"
+    },
+    {
+      "id": "R0045",
+      "company_id": "C007",
+      "author_id": "E005",
+      "contact_id": "C007-P1",
+      "posted_at": "2025-09-18",
+      "text": "訪問。",
+      "source_label": "過去日報（導入時に取り込み）"
+    },
+    {
+      "id": "R0046",
+      "company_id": "C006",
+      "author_id": "E006",
+      "contact_id": "C006-P1",
+      "posted_at": "2025-10-09",
+      "text": "重機更新の相談あり。",
+      "source_label": "過去日報（導入時に取り込み）"
+    },
+    {
+      "id": "R0047",
+      "company_id": "C001",
+      "author_id": "E003",
+      "contact_id": "C001-P1",
+      "posted_at": "2025-10-16",
+      "text": "秋口の部品不具合の件、取引先に納入した一部ロットで寸法不良。回収対応中とのこと。",
+      "source_label": "過去日報（導入時に取り込み）"
+    },
+    {
+      "id": "R0048",
+      "company_id": "C003",
+      "author_id": "E006",
+      "contact_id": "C003-P1",
+      "posted_at": "2025-11-13",
+      "text": "社長が「最近は朝の段取りがきつくなった」とこぼしていた。",
+      "source_label": "過去日報（導入時に取り込み）"
+    },
+    {
+      "id": "R0049",
+      "company_id": "C005",
+      "author_id": "E006",
+      "contact_id": "C005-P1",
+      "posted_at": "2025-11-27",
+      "text": "2024年問題への対応は一巡したとのこと。",
+      "source_label": "過去日報（導入時に取り込み）"
+    },
+    {
+      "id": "R0050",
+      "company_id": "C001",
+      "author_id": "E003",
+      "contact_id": "C001-P1",
+      "posted_at": "2025-12-04",
+      "text": "不具合対応は収束したとのこと。原因は加工治具の摩耗。",
+      "source_label": "過去日報（導入時に取り込み）"
+    },
+    {
+      "id": "R0051",
+      "company_id": "C004",
+      "author_id": "E003",
+      "contact_id": "C004-P1",
+      "posted_at": "2025-12-18",
+      "text": "賞与資金。例年通り。",
+      "source_label": "過去日報（導入時に取り込み）"
+    },
+    {
+      "id": "R0052",
+      "company_id": "C009",
+      "author_id": "E006",
+      "contact_id": "C009-P1",
+      "posted_at": "2026-01-08",
+      "text": "年始挨拶。海外展開の話が具体化してきた様子。「現地の商社と話をしている」と。",
+      "source_label": "過去日報（導入時に取り込み）"
+    },
+    {
+      "id": "R0053",
+      "company_id": "C007",
+      "author_id": "E003",
+      "contact_id": "C007-P1",
+      "posted_at": "2026-01-15",
+      "text": "年始挨拶。新規取扱メーカーが増えたとのこと。",
+      "source_label": "過去日報（導入時に取り込み）"
+    },
+    {
+      "id": "R0054",
+      "company_id": "C008",
+      "author_id": "E006",
+      "contact_id": "C008-P1",
+      "posted_at": "2026-01-22",
+      "text": "決算資料受領。横ばい。",
+      "source_label": "過去日報（導入時に取り込み）"
+    },
+    {
+      "id": "R0055",
+      "company_id": "C002",
+      "author_id": "E003",
+      "contact_id": "C002-P1",
+      "posted_at": "2026-01-27",
+      "text": "担当交代。年始挨拶にて。",
+      "source_label": "過去日報（導入時に取り込み）"
+    },
+    {
+      "id": "R0056",
+      "company_id": "C006",
+      "author_id": "E006",
+      "contact_id": "C006-P1",
+      "posted_at": "2026-02-12",
+      "text": "重機導入完了。",
+      "source_label": "過去日報（導入時に取り込み）"
+    },
+    {
+      "id": "R0057",
+      "company_id": "C001",
+      "author_id": "E003",
+      "contact_id": "C001-P1",
+      "posted_at": "2026-02-19",
+      "text": "賞与資金の相談。例年通り。",
+      "source_label": "過去日報（導入時に取り込み）"
+    },
+    {
+      "id": "R0058",
+      "company_id": "C010",
+      "author_id": "E003",
+      "contact_id": "C010-P1",
+      "posted_at": "2026-02-25",
+      "text": "新製品のリリース準備中。",
+      "source_label": "過去日報（導入時に取り込み）"
+    },
+    {
+      "id": "R0059",
+      "company_id": "C003",
+      "author_id": "E006",
+      "contact_id": "C003-P1",
+      "posted_at": "2026-03-05",
+      "text": "確定申告の時期。特記なし。",
+      "source_label": "過去日報（導入時に取り込み）"
+    },
+    {
+      "id": "R0060",
+      "company_id": "C001",
+      "author_id": "E003",
+      "contact_id": "C001-P1",
+      "posted_at": "2026-03-24",
+      "text": "担当交代の挨拶。",
+      "source_label": "過去日報（導入時に取り込み）"
+    },
+    {
+      "id": "R0061",
+      "company_id": "C005",
+      "author_id": "E006",
+      "contact_id": "C005-P1",
+      "posted_at": "2026-04-02",
+      "text": "決算資料受領。",
+      "source_label": "SFA日報（パイロット期間）"
+    },
+    {
+      "id": "R0062",
+      "company_id": "C002",
+      "author_id": "E003",
+      "contact_id": "C002-P1",
+      "posted_at": "2026-04-14",
+      "text": "訪問。受注は堅調。",
+      "source_label": "SFA日報（パイロット期間）"
+    },
+    {
+      "id": "R0063",
+      "company_id": "C001",
+      "author_id": "E001",
+      "contact_id": "C001-P1",
+      "posted_at": "2026-04-21",
+      "text": "着任のご挨拶。昨年秋の部品不具合の件について伺った。取引先への対応で社内が相当疲弊した様子。社長は「もう若い者に任せられればいいんだが」とおっしゃっていました。",
+      "source_label": "SFA日報（パイロット期間）"
+    },
+    {
+      "id": "R0064",
+      "company_id": "C004",
+      "author_id": "E003",
+      "contact_id": "C004-P1",
+      "posted_at": "2026-05-14",
+      "text": "新規取引先の開拓が進んでいるとのこと。",
+      "source_label": "SFA日報（パイロット期間）"
+    },
+    {
+      "id": "R0065",
+      "company_id": "C007",
+      "author_id": "E003",
+      "contact_id": "C007-P1",
+      "posted_at": "2026-05-21",
+      "text": "定例訪問。特記事項なし。",
+      "source_label": "SFA日報（パイロット期間）"
+    },
+    {
+      "id": "R0066",
+      "company_id": "C001",
+      "author_id": "E001",
+      "contact_id": "C001-P1",
+      "posted_at": "2026-05-28",
+      "text": "訪問。受注状況を伺いました。前年並みとのことです。",
+      "source_label": "SFA日報（パイロット期間）"
+    },
+    {
+      "id": "R0067",
+      "company_id": "C010",
+      "author_id": "E003",
+      "contact_id": "C010-P1",
+      "posted_at": "2026-06-03",
+      "text": "新工場の用地取得を検討中とのこと。設備投資の相談が来る見込み。",
+      "source_label": "SFA日報（パイロット期間）"
+    },
+    {
+      "id": "R0068",
+      "company_id": "C006",
+      "author_id": "E006",
+      "contact_id": "C006-P1",
+      "posted_at": "2026-06-11",
+      "text": "訪問。受注残は潤沢とのこと。",
+      "source_label": "SFA日報（パイロット期間）"
+    },
+    {
+      "id": "R0069",
+      "company_id": "C009",
+      "author_id": "E006",
+      "contact_id": "C009-P1",
+      "posted_at": "2026-06-18",
+      "text": "海外進出の資金計画についてご相談を受けた。社長の本気度はかなり高い印象。",
+      "source_label": "SFA日報（パイロット期間）"
+    },
+    {
+      "id": "R0070",
+      "company_id": "C002",
+      "author_id": "E003",
+      "contact_id": "C002-P1",
+      "posted_at": "2026-06-30",
+      "text": "定例訪問。社長が「専務は技術屋だから、経営は向いてないかもしれん」と。承継の話が少し後退している印象。",
+      "source_label": "SFA日報（パイロット期間）"
+    },
+    {
+      "id": "R0071",
+      "company_id": "C008",
+      "author_id": "E006",
+      "contact_id": "C008-P1",
+      "posted_at": "2026-07-02",
+      "text": "職人1名を新規採用したとのこと。",
+      "source_label": "SFA日報（パイロット期間）"
+    },
+    {
+      "id": "R0072",
+      "company_id": "C001",
+      "author_id": "E001",
+      "contact_id": "C001-P1",
+      "posted_at": "2026-07-07",
+      "text": "設備更新の件のその後を確認。以前ご相談いただいた設備更新は進展がありません。社長は「今から10年ものの機械を入れてもな」とのことでした。",
+      "source_label": "SFA日報（パイロット期間）"
+    },
+    {
+      "id": "R0073",
+      "company_id": "C005",
+      "author_id": "E006",
+      "contact_id": "C005-P1",
+      "posted_at": "2026-07-16",
+      "text": "常務の高野健太氏への承継準備が計画的に進んでいることを確認。",
+      "source_label": "SFA日報（パイロット期間）"
+    },
+    {
+      "id": "R0074",
+      "company_id": "C003",
+      "author_id": "E006",
+      "contact_id": "C003-P1",
+      "posted_at": "2026-07-23",
+      "text": "定例訪問。職人の高橋さんが腰を痛めて休んでいるとのこと。造作は田村さん一人で回している。",
+      "source_label": "SFA日報（パイロット期間）"
+    },
+    {
+      "id": "R0075",
+      "company_id": "C004",
+      "author_id": "E003",
+      "contact_id": "C004-P1",
+      "posted_at": "2026-08-06",
+      "text": "訪問。特記事項なし。",
+      "source_label": "SFA日報（パイロット期間）"
+    },
+    {
+      "id": "R0076",
+      "company_id": "C001",
+      "author_id": "E001",
+      "contact_id": "C001-P1",
+      "posted_at": "2026-08-19",
+      "text": "お盆明けの訪問。工場は稼働していました。",
+      "source_label": "SFA日報（パイロット期間）"
+    },
+    {
+      "id": "R0077",
+      "company_id": "C010",
+      "author_id": "E004",
+      "contact_id": "C010-P1",
+      "posted_at": "2026-08-26",
+      "text": "支店長同行訪問。若い経営者だが構想が明確で、地域の農業の姿を変えようという意志を感じた。",
+      "source_label": "SFA日報（パイロット期間）"
+    },
+    {
+      "id": "R0078",
+      "company_id": "C009",
+      "author_id": "E006",
+      "contact_id": "C009-P1",
+      "posted_at": "2026-09-03",
+      "text": "決算資料受領。増収増益。",
+      "source_label": "SFA日報（パイロット期間）"
+    },
+    {
+      "id": "R0079",
+      "company_id": "C002",
+      "author_id": "E003",
+      "contact_id": "C002-P1",
+      "posted_at": "2026-09-08",
+      "text": "決算資料受領。増収。",
+      "source_label": "SFA日報（パイロット期間）"
+    }
+  ],
+  "knowledge": [
+    {
+      "id": "K001",
+      "kind": "case",
+      "title": "工場長への代表交代と技術の文書化",
+      "industry": "金属加工",
+      "size": "40〜49名・従業員承継",
+      "branch": "前橋支店",
+      "year": 2022,
+      "summary": "後継者不在の中、勤続25年の工場長が代表就任。承継決定から1年かけて加工条件を文書化し、若手2名へ技術移転を実施した。銀行は自社株買取資金を支援。",
+      "signals": [
+        "後継者未定",
+        "技術継承の属人化"
+      ],
+      "actions": [],
+      "outcome": "従業員40名の雇用維持。取引先3社との取引継続。",
+      "questions": [],
+      "handled_by": [
+        "E008",
+        "E002"
+      ],
+      "source": "internal",
+      "visibility": "全行共有可",
+      "url": "",
+      "full_text": "工場長への代表交代と技術の文書化 後継者不在の中、勤続25年の工場長が代表就任。承継決定から1年かけて加工条件を文書化し、若手2名へ技術移転を実施した。銀行は自社株買取資金を支援。 従業員40名の雇用維持。取引先3社との取引継続。 金属加工 従業員承継 後継者未定 技術継承の属人化"
+    },
+    {
+      "id": "K002",
+      "kind": "case",
+      "title": "同業他社への事業譲渡",
+      "industry": "樹脂成形",
+      "size": "20〜29名・第三者承継",
+      "branch": "高崎支店",
+      "year": 2023,
+      "summary": "経営者の健康問題を契機に譲渡を決断。県内同業に事業譲渡し、従業員は全員が譲受先に移籍した。",
+      "signals": [
+        "経営者の高齢化",
+        "設備投資の停滞"
+      ],
+      "actions": [],
+      "outcome": "従業員29名が継続雇用。設備と顧客を県内に維持。",
+      "questions": [],
+      "handled_by": [
+        "E009",
+        "E007"
+      ],
+      "source": "internal",
+      "visibility": "全行共有可",
+      "url": "",
+      "full_text": "同業他社への事業譲渡 経営者の健康問題を契機に譲渡を決断。県内同業に事業譲渡し、従業員は全員が譲受先に移籍した。 従業員29名が継続雇用。設備と顧客を県内に維持。 樹脂成形 第三者承継 経営者の高齢化 設備投資の停滞"
+    },
+    {
+      "id": "K003",
+      "kind": "case",
+      "title": "役員へのMBOによる承継",
+      "industry": "精密部品",
+      "size": "50〜99名・親族外承継",
+      "branch": "太田支店",
+      "year": 2021,
+      "summary": "子息が承継を辞退。取締役2名によるMBOを実施。承継後の運転資金を含め銀行が支援した。",
+      "signals": [
+        "後継者未定",
+        "技術継承の属人化",
+        "設備投資の停滞"
+      ],
+      "actions": [],
+      "outcome": "技術者12名が定着。主力取引先との取引を維持。",
+      "questions": [],
+      "handled_by": [
+        "E002",
+        "E007"
+      ],
+      "source": "internal",
+      "visibility": "全行共有可",
+      "url": "",
+      "full_text": "役員へのMBOによる承継 子息が承継を辞退。取締役2名によるMBOを実施。承継後の運転資金を含め銀行が支援した。 技術者12名が定着。主力取引先との取引を維持。 精密部品 親族外承継 後継者未定 技術継承の属人化 設備投資の停滞"
+    },
+    {
+      "id": "K004",
+      "kind": "case",
+      "title": "円滑な廃業と従業員の地域内再就職",
+      "industry": "食品製造",
+      "size": "10〜19名・廃業支援",
+      "branch": "館林支店",
+      "year": 2024,
+      "summary": "承継先が見つからず廃業を選択。取引先への影響を抑えるため1年前から段階的に縮小し、従業員16名の再就職を地域内企業へ仲介した。",
+      "signals": [
+        "後継者未定",
+        "経営者の高齢化"
+      ],
+      "actions": [],
+      "outcome": "従業員16名が地域内で再就職。取引先への供給断絶を回避。",
+      "questions": [],
+      "handled_by": [
+        "E007"
+      ],
+      "source": "internal",
+      "visibility": "全行共有可",
+      "url": "",
+      "full_text": "円滑な廃業と従業員の地域内再就職 承継先が見つからず廃業を選択。取引先への影響を抑えるため1年前から段階的に縮小し、従業員16名の再就職を地域内企業へ仲介した。 従業員16名が地域内で再就職。取引先への供給断絶を回避。 食品製造 廃業支援 後継者未定 経営者の高齢化"
+    },
+    {
+      "id": "K005",
+      "kind": "case",
+      "title": "子息のUターンによる承継",
+      "industry": "金属加工",
+      "size": "30〜39名・親族承継",
+      "branch": "太田支店",
+      "year": 2023,
+      "summary": "県外勤務の子息が帰郷し承継。3年間の併走期間を設け、取引先への引継ぎを段階的に実施した。",
+      "signals": [
+        "後継者未定"
+      ],
+      "actions": [],
+      "outcome": "承継完了。新規設備投資により受注増。",
+      "questions": [],
+      "handled_by": [
+        "E006",
+        "E007"
+      ],
+      "source": "internal",
+      "visibility": "全行共有可",
+      "url": "",
+      "full_text": "子息のUターンによる承継 県外勤務の子息が帰郷し承継。3年間の併走期間を設け、取引先への引継ぎを段階的に実施した。 承継完了。新規設備投資により受注増。 金属加工 親族承継 後継者未定"
+    },
+    {
+      "id": "K006",
+      "kind": "case",
+      "title": "伝統技術の承継先マッチング",
+      "industry": "繊維",
+      "size": "20〜29名・第三者承継",
+      "branch": "桐生支店",
+      "year": 2022,
+      "summary": "独自の織り技術を保有。県外の同業が技術に価値を見出し譲受。職人5名が技術指導者として残留した。",
+      "signals": [
+        "技術継承の属人化",
+        "経営者の高齢化"
+      ],
+      "actions": [],
+      "outcome": "技術と職人5名を地域に維持。",
+      "questions": [],
+      "handled_by": [
+        "E008"
+      ],
+      "source": "internal",
+      "visibility": "全行共有可",
+      "url": "",
+      "full_text": "伝統技術の承継先マッチング 独自の織り技術を保有。県外の同業が技術に価値を見出し譲受。職人5名が技術指導者として残留した。 技術と職人5名を地域に維持。 繊維 第三者承継 技術継承の属人化 経営者の高齢化"
+    },
+    {
+      "id": "K001-D",
+      "kind": "case_detail",
+      "title": "工場長への代表交代と技術の文書化",
+      "industry": "金属加工",
+      "size": "従業員42名",
+      "branch": "前橋支店",
+      "year": 2022,
+      "summary": "後継者不在の中、勤続25年の工場長が代表就任。承継決定から1年かけて加工条件を文書化し、若手2名へ技術移転を実施した。銀行は自社株買取資金を支援。",
+      "signals": [
+        "後継者未定",
+        "技術継承の属人化"
+      ],
+      "actions": [],
+      "outcome": "従業員40名の雇用維持。取引先3社との取引継続。",
+      "questions": [],
+      "handled_by": [
+        "E008",
+        "E002"
+      ],
+      "source": "internal",
+      "visibility": "案件関係者・事業承継支援室のみ",
+      "url": "",
+      "full_text": "後継者不在の中、勤続25年の工場長が代表就任。承継決定から1年かけて加工条件を文書化し、若手2名へ技術移転を実施した。銀行は自社株買取資金を支援。 従業員40名の雇用維持。取引先3社との取引継続。"
+    },
+    {
+      "id": "K002-D",
+      "kind": "case_detail",
+      "title": "同業他社への事業譲渡",
+      "industry": "樹脂成形",
+      "size": "従業員29名",
+      "branch": "高崎支店",
+      "year": 2023,
+      "summary": "経営者の健康問題を契機に譲渡を決断。県内同業に事業譲渡し、従業員は全員が譲受先に移籍した。",
+      "signals": [
+        "経営者の高齢化",
+        "設備投資の停滞"
+      ],
+      "actions": [],
+      "outcome": "従業員29名が継続雇用。設備と顧客を県内に維持。",
+      "questions": [],
+      "handled_by": [
+        "E009",
+        "E007"
+      ],
+      "source": "internal",
+      "visibility": "案件関係者・事業承継支援室のみ",
+      "url": "",
+      "full_text": "経営者の健康問題を契機に譲渡を決断。県内同業に事業譲渡し、従業員は全員が譲受先に移籍した。 従業員29名が継続雇用。設備と顧客を県内に維持。"
+    },
+    {
+      "id": "K003-D",
+      "kind": "case_detail",
+      "title": "役員へのMBOによる承継",
+      "industry": "精密部品",
+      "size": "従業員55名",
+      "branch": "太田支店",
+      "year": 2021,
+      "summary": "子息が承継を辞退。取締役2名によるMBOを実施。承継後の運転資金を含め銀行が支援した。",
+      "signals": [
+        "後継者未定",
+        "技術継承の属人化",
+        "設備投資の停滞"
+      ],
+      "actions": [],
+      "outcome": "技術者12名が定着。主力取引先との取引を維持。",
+      "questions": [],
+      "handled_by": [
+        "E002",
+        "E007"
+      ],
+      "source": "internal",
+      "visibility": "案件関係者・事業承継支援室のみ",
+      "url": "",
+      "full_text": "子息が承継を辞退。取締役2名によるMBOを実施。承継後の運転資金を含め銀行が支援した。 技術者12名が定着。主力取引先との取引を維持。"
+    },
+    {
+      "id": "K004-D",
+      "kind": "case_detail",
+      "title": "円滑な廃業と従業員の地域内再就職",
+      "industry": "食品製造",
+      "size": "従業員18名",
+      "branch": "館林支店",
+      "year": 2024,
+      "summary": "承継先が見つからず廃業を選択。取引先への影響を抑えるため1年前から段階的に縮小し、従業員16名の再就職を地域内企業へ仲介した。",
+      "signals": [
+        "後継者未定",
+        "経営者の高齢化"
+      ],
+      "actions": [],
+      "outcome": "従業員16名が地域内で再就職。取引先への供給断絶を回避。",
+      "questions": [],
+      "handled_by": [
+        "E007"
+      ],
+      "source": "internal",
+      "visibility": "案件関係者・事業承継支援室のみ",
+      "url": "",
+      "full_text": "承継先が見つからず廃業を選択。取引先への影響を抑えるため1年前から段階的に縮小し、従業員16名の再就職を地域内企業へ仲介した。 従業員16名が地域内で再就職。取引先への供給断絶を回避。"
+    },
+    {
+      "id": "K005-D",
+      "kind": "case_detail",
+      "title": "子息のUターンによる承継",
+      "industry": "金属加工",
+      "size": "従業員31名",
+      "branch": "太田支店",
+      "year": 2023,
+      "summary": "県外勤務の子息が帰郷し承継。3年間の併走期間を設け、取引先への引継ぎを段階的に実施した。",
+      "signals": [
+        "後継者未定"
+      ],
+      "actions": [],
+      "outcome": "承継完了。新規設備投資により受注増。",
+      "questions": [],
+      "handled_by": [
+        "E006",
+        "E007"
+      ],
+      "source": "internal",
+      "visibility": "案件関係者・事業承継支援室のみ",
+      "url": "",
+      "full_text": "県外勤務の子息が帰郷し承継。3年間の併走期間を設け、取引先への引継ぎを段階的に実施した。 承継完了。新規設備投資により受注増。"
+    },
+    {
+      "id": "K006-D",
+      "kind": "case_detail",
+      "title": "伝統技術の承継先マッチング",
+      "industry": "繊維",
+      "size": "従業員24名",
+      "branch": "桐生支店",
+      "year": 2022,
+      "summary": "独自の織り技術を保有。県外の同業が技術に価値を見出し譲受。職人5名が技術指導者として残留した。",
+      "signals": [
+        "技術継承の属人化",
+        "経営者の高齢化"
+      ],
+      "actions": [],
+      "outcome": "技術と職人5名を地域に維持。",
+      "questions": [],
+      "handled_by": [
+        "E008"
+      ],
+      "source": "internal",
+      "visibility": "案件関係者・事業承継支援室のみ",
+      "url": "",
+      "full_text": "独自の織り技術を保有。県外の同業が技術に価値を見出し譲受。職人5名が技術指導者として残留した。 技術と職人5名を地域に維持。"
+    },
+    {
+      "id": "H-001",
+      "title": "後継者の話題を切り出す言い回し",
+      "signals": [
+        "T01"
+      ],
+      "handled_by": [
+        "E007"
+      ],
+      "summary": "「後継者はどうされますか」と正面から聞くと会話が止まる。「10年後、この会社はどんな姿になっていてほしいですか」から入り、社長の描く未来の中に後継者の話を置く。息子さんの話題は、社長から出たときにだけ広げる。",
+      "questions": [
+        "10年後、この会社はどんな姿になっていてほしいですか（社長の描く未来から入る）",
+        "息子さん（後継者候補）の意向を、直接確認されたことはありますか"
+      ],
+      "kind": "knowhow",
+      "source": "internal",
+      "url": "",
+      "visibility": "全行共有可",
+      "full_text": "後継者の話題を切り出す言い回し 「後継者はどうされますか」と正面から聞くと会話が止まる。「10年後、この会社はどんな姿になっていてほしいですか」から入り、社長の描く未来の中に後継者の話を置く。息子さんの話題は、社長から出たときにだけ広げる。 10年後、この会社はどんな姿になっていてほしいですか（社長の描く未来から入る） 息子さん（後継者候補）の意向を、直接確認されたことはありますか"
+    },
+    {
+      "id": "H-002",
+      "title": "技術の棚卸しチェックリスト",
+      "signals": [
+        "T02"
+      ],
+      "handled_by": [
+        "E002",
+        "E008"
+      ],
+      "summary": "「誰にしかできない作業」を工程ごとに書き出す。①その作業を知っている人数、②手順書の有無、③次にできるようになるまでの期間。3項目だけで、属人化の度合いが社長にも見える。",
+      "questions": [
+        "その方にしかできない作業は、工程でいうとどこですか",
+        "その方の技術は、他の方に引き継がれていますか"
+      ],
+      "kind": "knowhow",
+      "source": "internal",
+      "url": "",
+      "visibility": "全行共有可",
+      "full_text": "技術の棚卸しチェックリスト 「誰にしかできない作業」を工程ごとに書き出す。①その作業を知っている人数、②手順書の有無、③次にできるようになるまでの期間。3項目だけで、属人化の度合いが社長にも見える。 その方にしかできない作業は、工程でいうとどこですか その方の技術は、他の方に引き継がれていますか"
+    },
+    {
+      "id": "H-003",
+      "title": "設備投資の停滞は「将来を描けていない」のサイン",
+      "signals": [
+        "T03"
+      ],
+      "handled_by": [
+        "E002"
+      ],
+      "summary": "「今から10年ものの機械を入れてもな」という言葉は、資金の話ではなく時間の話。設備の話をしながら「誰が使う機械か」を聞くと、後継者の話につながる。",
+      "questions": [
+        "その機械は、10年後に誰が使っていますか"
+      ],
+      "kind": "knowhow",
+      "source": "internal",
+      "url": "",
+      "visibility": "全行共有可",
+      "full_text": "設備投資の停滞は「将来を描けていない」のサイン 「今から10年ものの機械を入れてもな」という言葉は、資金の話ではなく時間の話。設備の話をしながら「誰が使う機械か」を聞くと、後継者の話につながる。 その機械は、10年後に誰が使っていますか"
+    },
+    {
+      "id": "H-004",
+      "title": "品質事故は切り捨てる理由ではなく、支援に気づくきっかけ",
+      "signals": [
+        "T04"
+      ],
+      "handled_by": [
+        "E008"
+      ],
+      "summary": "リコール対応中は承継の話をしない。まず資金繰りと品質管理体制の支援を先に置き、落ち着いてから「この会社を続ける人」の話をする。",
+      "questions": [
+        "不具合対応の負担は、今どの程度残っていますか"
+      ],
+      "kind": "knowhow",
+      "source": "internal",
+      "url": "",
+      "visibility": "全行共有可",
+      "full_text": "品質事故は切り捨てる理由ではなく、支援に気づくきっかけ リコール対応中は承継の話をしない。まず資金繰りと品質管理体制の支援を先に置き、落ち着いてから「この会社を続ける人」の話をする。 不具合対応の負担は、今どの程度残っていますか"
+    },
+    {
+      "id": "H-005",
+      "title": "経営者の体調の話は、本人が承継を意識したサイン",
+      "signals": [
+        "T01"
+      ],
+      "handled_by": [
+        "E007"
+      ],
+      "summary": "体調の話が社長の口から出たときは、承継を意識し始めている。「無理をなさらず」で終わらせず、「もしものとき、誰が会社を回しますか」を穏やかに置く。",
+      "questions": [
+        "もしものとき、会社を回すのはどなたになりますか"
+      ],
+      "kind": "knowhow",
+      "source": "internal",
+      "url": "",
+      "visibility": "全行共有可",
+      "full_text": "経営者の体調の話は、本人が承継を意識したサイン 体調の話が社長の口から出たときは、承継を意識し始めている。「無理をなさらず」で終わらせず、「もしものとき、誰が会社を回しますか」を穏やかに置く。 もしものとき、会社を回すのはどなたになりますか"
+    },
+    {
+      "id": "H-006",
+      "title": "前任担当者に必ず電話する",
+      "signals": [
+        "T01",
+        "T02"
+      ],
+      "handled_by": [
+        "E002"
+      ],
+      "summary": "記録に残っていない空気は前任者が持っている。「気になっていた先」は前任者が一番よく知っている。同行訪問を頼むと、社長も安心する。",
+      "questions": [],
+      "kind": "knowhow",
+      "source": "internal",
+      "url": "",
+      "visibility": "全行共有可",
+      "full_text": "前任担当者に必ず電話する 記録に残っていない空気は前任者が持っている。「気になっていた先」は前任者が一番よく知っている。同行訪問を頼むと、社長も安心する。 前任の担当者から、この会社について引き継いだ話はありますか",
+      "actions": [
+        "前任の担当者に電話し、記録に残っていない様子を聞く（同行訪問を頼むと社長も安心する）"
+      ]
+    },
+    {
+      "id": "H-007",
+      "title": "承継の選択肢は「会社を残す」以外も並べる",
+      "signals": [
+        "T01"
+      ],
+      "handled_by": [
+        "E007",
+        "E010"
+      ],
+      "summary": "親族内・従業員・第三者承継に加えて、技術・顧客・従業員の移管、円滑な廃業まで並べる。「残すべきは会社ではなく地域の価値」と言えると、社長の肩の力が抜ける。",
+      "questions": [
+        "会社そのものを残すことと、技術や雇用を残すことのどちらを優先されますか"
+      ],
+      "kind": "knowhow",
+      "source": "internal",
+      "url": "",
+      "visibility": "全行共有可",
+      "full_text": "承継の選択肢は「会社を残す」以外も並べる 親族内・従業員・第三者承継に加えて、技術・顧客・従業員の移管、円滑な廃業まで並べる。「残すべきは会社ではなく地域の価値」と言えると、社長の肩の力が抜ける。 会社そのものを残すことと、技術や雇用を残すことのどちらを優先されますか"
+    },
+    {
+      "id": "H-008",
+      "title": "取引先への後継者紹介は早いほどよい",
+      "signals": [
+        "T01"
+      ],
+      "handled_by": [
+        "E007"
+      ],
+      "summary": "主力取引先が離れる最大の理由は「誰が継ぐか分からない」こと。後継者が決まりかけた段階で、取引先に一緒に挨拶に行く。",
+      "questions": [
+        "主力取引先は、後継者の話をご存じですか"
+      ],
+      "kind": "knowhow",
+      "source": "internal",
+      "url": "",
+      "visibility": "全行共有可",
+      "full_text": "取引先への後継者紹介は早いほどよい 主力取引先が離れる最大の理由は「誰が継ぐか分からない」こと。後継者が決まりかけた段階で、取引先に一緒に挨拶に行く。 主力取引先は、後継者の話をご存じですか"
+    }
+  ]
+}

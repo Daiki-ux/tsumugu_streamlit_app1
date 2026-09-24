@@ -1,0 +1,13 @@
+data/tsumugu.db
+.streamlit/secrets.toml
+__pycache__/
+.pytest_cache/
+.DS_Store
+.claude/
+# 個人の習作リポジトリには、チームの共有資料（企画書など）を入れない
+0_*.md
+1_*.md
+2_*.html
+3_*.html
+4_*.md
+5_*.docx

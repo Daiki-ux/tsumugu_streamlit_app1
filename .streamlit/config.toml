@@ -1,0 +1,7 @@
+# カードの配色（白地）に合わせて、ライトテーマに固定する
+[theme]
+base = "light"
+primaryColor = "#0B5CAB"
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#F3F3F3"
+textColor = "#1E2637"
