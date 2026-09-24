@@ -241,7 +241,9 @@ def collate(post, ext):
             item["evidence"][t["tag_id"]] = t["evidence"] or ""
             item["origin"][t["tag_id"]] = t.get("origin") or "report"
             if t["tier"] == "value":
-                value_assets.append({"tag": t["tag_id"], "source": f"post {p['id']}", "text": t["evidence"] or ""})
+                value_assets.append({"tag": t["tag_id"], "source": f"post {p['id']}", "text": t["evidence"] or "",
+                                     "post_id": p["id"], "date": p["posted_at"], "author": item["author"],
+                                     "unconfirmed": (t.get("origin") or "report") == "hearsay"})
         timeline.append(item)
     author = db.get_staff(post["author_id"])
     cur = {"post_id": post["id"], "date": post["posted_at"], "author": author["name"] if author else post["author_id"],
@@ -250,7 +252,9 @@ def collate(post, ext):
            "evidence": {t["tag"]: t["evidence"] for t in all_tags(ext)},
            "origin": {t["tag"]: t.get("origin", "report") for t in all_tags(ext)}}
     timeline.append(cur)
-    value_assets += [{"tag": t["tag"], "source": f"post {post['id']}", "text": t["evidence"]} for t in ext["value"]]
+    value_assets += [{"tag": t["tag"], "source": f"post {post['id']}", "text": t["evidence"], "post_id": post["id"],
+                      "date": post["posted_at"], "author": cur["author"], "unconfirmed": t.get("origin") == "hearsay"}
+                     for t in ext["value"]]
 
     # pandas：記録×正式タグの表にして、タグごとに 初出・最新・件数・書いた担当者 を集計（★3-1「整理・加工・分析」）
     rows = [{"date": t["date"], "author": t["author"], "tag": tag} for t in timeline for tag in t["formal"]]
@@ -374,18 +378,60 @@ def describes_value(note):
 VALUE_LABEL = {"V_EMPLOYMENT": "地域の雇用", "V_CUSTOMERS": "長年の取引関係", "V_TECHNOLOGY": "技術・ノウハウ"}
 
 
-def legacy_items(profile):
-    """次の世代につなぎたいもの（タイル表示用）→ [{tag, label, head, detail, source}]
-    head＝大きく見せる要点（38名／2社／特殊薄板加工）、detail＝補足。記録から拾った価値（地域の文化・ブランド等）は引用を補足に"""
-    seen, out = set(), []
+VALUE_SIM = json.loads((BASE_DIR / "docs" / "value_extractions.json").read_text(encoding="utf-8")) \
+    if (BASE_DIR / "docs" / "value_extractions.json").exists() else {}
+
+
+def extract_tech(post_id, evidence, use_llm=True):
+    """日報の「技術・ノウハウ」の記述 → {name, holder, by}。技術名と、それを担っている人（書かれていれば）。
+    LLM があれば LLM で取り出す。無ければ docs/value_extractions.json の模擬結果（プレゼン用に用意した LLM の出力）を使う。
+    どちらも無ければ None（画面では日報の文をそのまま引用する）"""
+    if use_llm and llm_available():
+        data = llm_chat("地方銀行の日報の一文から、企業の技術・ノウハウの名前（10〜20 字）と、それを担っている人（書かれていれば。役職付きで）を取り出す。"
+                        '出力は JSON のみ: {"name":"...","holder":"..."}。文に無いことは書かない。担い手が書かれていなければ holder は空。',
+                        evidence, want_json=True)
+        if data and data.get("name"):
+            return {"name": data["name"], "holder": data.get("holder", ""), "by": "llm"}
+    sim = VALUE_SIM.get(post_id, {}).get("V_TECHNOLOGY")
+    return {**sim, "by": "llm-sim"} if sim else None
+
+
+def _same_tech(a, b):
+    return bool(a) and bool(b) and (a == b or a in b or b in a)
+
+
+def legacy_items(profile, use_llm=False):
+    """次の世代につなぎたいもの（帯の表示用）。種類ごとのまとまり →
+      [{tag, label, head, detail, source, entries[]}]
+      雇用・取引は head（38名／2社）を大きく見せる。技術・ノウハウは entries に複数並べる（変更記録 CH-29）：
+      entries[{name, detail, holder, source, unconfirmed, by}]  by＝llm | llm-sim（模擬）| None（顧客データ・引用のまま）"""
+    groups, order = {}, []
     for v in sorted(profile["value_assets"], key=lambda v: 0 if v["source"] == "static" else 1):
-        if v["tag"] in seen:
+        tag = v["tag"]
+        if tag == "V_TECHNOLOGY":
+            g = groups.setdefault(tag, {"tag": tag, "label": VALUE_LABEL[tag], "head": "", "detail": "", "source": "", "entries": []})
+            if tag not in order:
+                order.append(tag)
+            if v["source"] == "static":
+                g["entries"].append({"name": v.get("head") or v["text"], "detail": v.get("detail", ""), "holder": "",
+                                     "source": "顧客データ", "unconfirmed": False, "by": None})
+                continue
+            ex = extract_tech(v.get("post_id"), v["text"], use_llm=use_llm)
+            name = ex["name"] if ex else ""
+            if name and any(_same_tech(name, e["name"]) for e in g["entries"]):
+                continue                                   # 同じ技術の話は 1 つにまとめる
+            g["entries"].append({"name": name or v["text"], "detail": f"「{v['text']}」" if name else "",
+                                 "holder": (ex or {}).get("holder", ""), "unconfirmed": v.get("unconfirmed", False),
+                                 "source": f"{v['date'][:4]}年{int(v['date'][5:7])}月・{(v.get('author') or '').split(' ')[0]}",
+                                 "by": (ex or {}).get("by")})
             continue
-        seen.add(v["tag"])
-        out.append({"tag": v["tag"], "label": VALUE_LABEL.get(v["tag"], tag_name(v["tag"])),
-                    "head": v.get("head") or tag_name(v["tag"]), "detail": v.get("detail", v["text"]),
-                    "source": "顧客データ" if v["source"] == "static" else "面談メモ"})
-    return out
+        if tag in groups:
+            continue
+        order.append(tag)
+        groups[tag] = {"tag": tag, "label": VALUE_LABEL.get(tag, tag_name(tag)),
+                       "head": v.get("head") or tag_name(tag), "detail": v.get("detail", v["text"]),
+                       "source": "顧客データ" if v["source"] == "static" else "面談メモ", "entries": []}
+    return [groups[t] for t in order]
 
 
 def lost_values(profile):
@@ -501,7 +547,7 @@ def assess(profile, ext, use_llm=True):
         sig["reason"] = text or reason_template(profile, summary)
         sig["lost_values"] = lost_values(profile)
         sig["generated_by"] = "gate+llm" if text else "gate+template"
-    sig["legacy"] = legacy_items(profile)
+    sig["legacy"] = legacy_items(profile, use_llm=use_llm)
     return sig
 
 

@@ -93,6 +93,14 @@ div[data-testid="stVerticalBlock"] > div {{ margin-bottom: 2px; }}
 .legacy .it .lb {{ font-size:11.5px; font-weight:700; color:#2E7D5B; }}
 .legacy .it .hd2 {{ font-size:22px; font-weight:800; color:{INK}; line-height:1.3; margin:2px 0; }}
 .legacy .it .dt {{ font-size:12px; color:{SUB}; line-height:1.5; }}
+.legacy .it.wide {{ grid-column:span 2; }}
+@media (max-width: 700px) {{ .legacy .it.wide {{ grid-column:auto; }} }}
+.legacy .en {{ padding:6px 0; border-top:1px solid #E6F1EA; }}
+.legacy .en:first-of-type {{ border-top:none; padding-top:2px; }}
+.legacy .en .nm {{ font-size:16px; font-weight:800; color:{INK}; line-height:1.4; }}
+.legacy .en .hl {{ font-size:12px; font-weight:700; color:#1F5E43; background:#E2F1E8; border-radius:999px; padding:1px 9px; margin-left:8px; }}
+.legacy .en .uc {{ font-size:10.5px; color:#8A5A12; border:1px dashed #9A6410; border-radius:6px; padding:0 6px; margin-left:6px; }}
+.legacy .ft {{ font-size:11px; color:#3F6B57; margin-top:8px; }}
 .sum {{ border:1px solid {LINE}; border-radius:10px; background:#FAFBFC; padding:10px 16px 8px; margin:0 0 14px; }}
 .sum .top {{ display:flex; flex-wrap:wrap; align-items:center; gap:4px 10px; padding-bottom:8px; border-bottom:1px solid #EDEFF2; }}
 .sum .st {{ border-radius:999px; padding:3px 12px; font-size:13.5px; font-weight:800; }}
@@ -219,14 +227,32 @@ def card_signals(sig):
 
 def legacy_band(items, note="この企業が地域で担っていること。承継の対話で、社長と一緒に大切にしたいものです"):
     """次の世代につなぎたいもの。企画の芯なので、前向きな色（緑）の帯で目立たせる（警告の色は使わない）
-    items＝tsumugu.legacy_items の [{label, head, detail, source}]"""
+    items＝tsumugu.legacy_items のまとまり。雇用・取引は数字を大きく、技術・ノウハウは横長のタイルに複数並べる（名前・担い手・出どころ）"""
     if not items:
         return
-    cells = "".join(f"<div class='it'><div class='lb'>{escape(x['label'])}</div><div class='hd2'>{escape(x['head'])}</div>"
-                    f"<div class='dt'>{escape(x['detail'] or '')}{'　' if x['detail'] else ''}"
-                    f"<span style='opacity:.75'>（{escape(x['source'])}）</span></div></div>" for x in items)
+    cells, by = "", set()
+    for x in items:
+        if x.get("entries"):
+            rows = ""
+            for e in x["entries"]:
+                by.add(e.get("by"))
+                holder = (f"<span class='hl'>担い手：{escape(e['holder'])}</span>") if e.get("holder") else ""
+                unc = "<span class='uc'>未確認</span>" if e.get("unconfirmed") else ""
+                rows += (f"<div class='en'><div class='nm'>● {escape(e['name'])}{holder}</div>"
+                         f"<div class='dt'>{escape(e['detail'] or '')}{'　' if e['detail'] else ''}"
+                         f"<span style='opacity:.75'>（{escape(e['source'])}）</span>{unc}</div></div>")
+            cells += (f"<div class='it wide'><div class='lb'>{escape(x['label'])}（{len(x['entries'])}件）</div>{rows}</div>")
+        else:
+            cells += (f"<div class='it'><div class='lb'>{escape(x['label'])}</div><div class='hd2'>{escape(x['head'])}</div>"
+                      f"<div class='dt'>{escape(x['detail'] or '')}{'　' if x['detail'] else ''}"
+                      f"<span style='opacity:.75'>（{escape(x['source'])}）</span></div></div>")
+    foot = ""
+    if "llm-sim" in by:
+        foot = "<div class='ft'>技術名と担い手は、AI が日報から取り出したものです（このデモでは、あらかじめ用意した結果で AI の処理を模擬しています）</div>"
+    elif "llm" in by:
+        foot = "<div class='ft'>技術名と担い手は、AI が日報から取り出したものです。元の記述と出どころで確かめられます</div>"
     st.markdown(f"<div class='legacy'><div class='lh'><span class='t'>🌱 次の世代につなぎたいもの</span>"
-                f"<span class='n'>{escape(note)}</span></div><div class='grid'>{cells}</div></div>", unsafe_allow_html=True)
+                f"<span class='n'>{escape(note)}</span></div><div class='grid'>{cells}</div>{foot}</div>", unsafe_allow_html=True)
 
 
 def card_questions(questions, title="次回訪問で確認するとよいこと", note="AI からの提案です。実際に何を聞くかは担当者が決めます"):
