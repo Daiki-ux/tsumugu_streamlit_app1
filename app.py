@@ -69,6 +69,16 @@ div[data-testid="stVerticalBlock"] > div {{ margin-bottom: 2px; }}
 .sfa .fx b {{ color:#706E6B; font-weight:600; margin-right:4px; }}
 
 
+/* タブ：押せる「ボタン」に見えるように（選んでいるものは塗りつぶし、ほかは枠付き）。Streamlit 1.60 の stTabs の作りに合わせる */
+.stTabs [role="tablist"] {{ gap:8px !important; flex-wrap:wrap; padding-bottom:4px; }}
+.stTabs [role="tablist"]::after {{ display:none !important; }}
+.stTabs .react-aria-SelectionIndicator {{ display:none !important; }}
+.stTabs [data-testid="stTab"] {{ border:1px solid #C9D6E6 !important; border-radius:999px !important; padding:6px 16px !important;
+    background:#fff !important; cursor:pointer; box-shadow:0 1px 2px rgba(30,38,55,.06); }}
+.stTabs [data-testid="stTab"] p {{ font-size:13.5px !important; font-weight:700 !important; color:#2F5D8A !important; }}
+.stTabs [data-testid="stTab"]:hover {{ background:#EEF3F9 !important; }}
+.stTabs [data-testid="stTab"][aria-selected="true"] {{ background:#2F5D8A !important; border-color:#2F5D8A !important; }}
+.stTabs [data-testid="stTab"][aria-selected="true"] p {{ color:#fff !important; }}
 .sec {{ display:flex; flex-wrap:wrap; align-items:center; gap:4px 10px; margin:26px 0 10px; padding-bottom:6px; border-bottom:1px solid {LINE}; }}
 .sec .no {{ background:#2F5D8A; color:#fff; border-radius:999px; min-width:22px; height:22px; display:inline-flex; align-items:center;
             justify-content:center; font-size:12px; font-weight:800; }}
@@ -560,7 +570,7 @@ def show_reaction(r):
         cases = [k for k in r["knowledge"]["items"] if k["kind"] == "case"]
         tips = [k for k in r["knowledge"]["items"] if k["kind"] == "knowhow"]
         refs = r["next_actions"]["public_refs"]
-        section(next(no), "参考にする", "社内の事例・現場の知恵・公的な制度")
+        section(next(no), "参考にする", "社内の事例・現場の知恵・公的な制度（ボタンで切り替え）")
         t1, t2, t3 = st.tabs([f"社内の支援事例（{len(cases)}）", f"現場の知恵（{len(tips)}）", f"公的な支援制度・法令（{len(refs)}）"])
         with t1:
             card_cases(r["knowledge"], [s["name"] for s in sig["tags"]] + [x["name"] for x in counted], title="")
@@ -617,9 +627,16 @@ def register(company_id):
     if not text:
         st.session_state["flash_warn"] = "業務報告を入力してください"
         return
-    post = tsumugu.new_post(company_id, st.session_state.get(f"rp_contact_{company_id}"), me,
-                            st.session_state["rp_date"].isoformat(), text, activity=st.session_state.get("rp_activity"))
-    st.session_state["result"] = tsumugu.run(post)
+    day = st.session_state["rp_date"].isoformat()
+    same = db.find_same_post(company_id, me, day, text)
+    if same:                                   # 二度押し・登録し直し：新しく記録せず、登録済みの日報への反応をもう一度見せる
+        post = tsumugu.new_post(company_id, st.session_state.get(f"rp_contact_{company_id}"), me, day, text,
+                                post_id=same, activity=st.session_state.get("rp_activity"))
+        st.session_state["result"] = {**tsumugu.run(post, persist=False), "duplicate": True}
+    else:
+        post = tsumugu.new_post(company_id, st.session_state.get(f"rp_contact_{company_id}"), me, day, text,
+                                activity=st.session_state.get("rp_activity"))
+        st.session_state["result"] = tsumugu.run(post)
     for k in ("rp_text", "rp_voice"):
         st.session_state[k] = ""
 
@@ -651,7 +668,10 @@ def page_report():
         st.button("SFA に登録する", type="primary", on_click=register, args=(company_id,))
     r = st.session_state.get("result")
     if r and r["post"]["company_id"] == company_id:
-        st.success(f"SFA に登録しました（模擬）　{r['post']['posted_at']}　{c['name']}")
+        if r.get("duplicate"):
+            st.info(f"同じ内容の日報は登録済みです（{r['post']['posted_at']}　{c['name']}）。新しくは登録せず、登録済みの日報への反応を表示しています")
+        else:
+            st.success(f"SFA に登録しました（模擬）　{r['post']['posted_at']}　{c['name']}")
         show_reaction(r)
     st.caption("多くの日報では何も出ません。ときどき「過去に関連する記録があります」、まれに「支援の検討が必要かもしれません」が出ます"
                "（オオカミ少年にならないための設計です）。")
