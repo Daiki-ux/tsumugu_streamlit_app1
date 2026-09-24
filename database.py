@@ -245,9 +245,16 @@ def insert_post(p):
            p.get("activity"), "SFA日報（パイロット期間）"))
 
 
+def find_same_post(company_id, author_id, posted_at, text):
+    """同じ企業・同じ担当者・同じ訪問日・同じ本文の日報があればその ID（二重登録を防ぐ）"""
+    rows = _rows("SELECT id, text FROM posts WHERE company_id = ? AND author_id = ? AND posted_at = ?", (company_id, author_id, posted_at))
+    return next((r["id"] for r in rows if (r["text"] or "").strip() == (text or "").strip()), None)   # 全角の空白も揃える
+
+
 def next_post_id():
-    rows = _rows("SELECT id FROM posts WHERE id LIKE 'P-9%' ORDER BY id DESC LIMIT 1")
-    return f"P-{int(rows[0]['id'][2:]) + 1}" if rows else "P-9001"
+    """パイロット期間に登録する日報の ID（P-9001 から連番）。数値で最大を取る（文字列順だと P-9999 の次で止まるため）"""
+    n = _rows("SELECT MAX(CAST(SUBSTR(id, 3) AS INTEGER)) AS n FROM posts WHERE id GLOB 'P-[0-9]*'")[0]["n"]
+    return f"P-{max((n or 0) + 1, 9001)}"
 
 
 def replace_post_tags(post_id, tags):

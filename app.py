@@ -627,9 +627,16 @@ def register(company_id):
     if not text:
         st.session_state["flash_warn"] = "業務報告を入力してください"
         return
-    post = tsumugu.new_post(company_id, st.session_state.get(f"rp_contact_{company_id}"), me,
-                            st.session_state["rp_date"].isoformat(), text, activity=st.session_state.get("rp_activity"))
-    st.session_state["result"] = tsumugu.run(post)
+    day = st.session_state["rp_date"].isoformat()
+    same = db.find_same_post(company_id, me, day, text)
+    if same:                                   # 二度押し・登録し直し：新しく記録せず、登録済みの日報への反応をもう一度見せる
+        post = tsumugu.new_post(company_id, st.session_state.get(f"rp_contact_{company_id}"), me, day, text,
+                                post_id=same, activity=st.session_state.get("rp_activity"))
+        st.session_state["result"] = {**tsumugu.run(post, persist=False), "duplicate": True}
+    else:
+        post = tsumugu.new_post(company_id, st.session_state.get(f"rp_contact_{company_id}"), me, day, text,
+                                activity=st.session_state.get("rp_activity"))
+        st.session_state["result"] = tsumugu.run(post)
     for k in ("rp_text", "rp_voice"):
         st.session_state[k] = ""
 
@@ -661,7 +668,10 @@ def page_report():
         st.button("SFA に登録する", type="primary", on_click=register, args=(company_id,))
     r = st.session_state.get("result")
     if r and r["post"]["company_id"] == company_id:
-        st.success(f"SFA に登録しました（模擬）　{r['post']['posted_at']}　{c['name']}")
+        if r.get("duplicate"):
+            st.info(f"同じ内容の日報は登録済みです（{r['post']['posted_at']}　{c['name']}）。新しくは登録せず、登録済みの日報への反応を表示しています")
+        else:
+            st.success(f"SFA に登録しました（模擬）　{r['post']['posted_at']}　{c['name']}")
         show_reaction(r)
     st.caption("多くの日報では何も出ません。ときどき「過去に関連する記録があります」、まれに「支援の検討が必要かもしれません」が出ます"
                "（オオカミ少年にならないための設計です）。")

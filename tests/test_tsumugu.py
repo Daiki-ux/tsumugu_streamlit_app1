@@ -232,3 +232,26 @@ def test_candidate_tag_promotion_is_decided_by_a_person():
     assert row["status"] == "proposed"
     import tsumugu
     assert "海外展開への関心" not in tsumugu.RULES["formal"]                    # 承認しても正式タグは勝手に増えない
+
+
+def test_same_report_is_not_registered_twice():
+    """同じ企業・担当者・訪問日・本文の日報は二重に登録しない（出典が同じ記録で重ならない）"""
+    import database as db
+    import tsumugu
+    text = "定例訪問。二重登録の確認用。"
+    assert db.find_same_post("C001", "E001", "2026-09-20", text) is None
+    tsumugu.run(tsumugu.new_post("C001", None, "E001", "2026-09-20", text), use_llm=False)
+    first = db.find_same_post("C001", "E001", "2026-09-20", text)
+    assert first
+    assert db.find_same_post("C001", "E001", "2026-09-20", text + "　") == first      # 前後の空白は同じとみなす
+    assert db.find_same_post("C001", "E001", "2026-09-21", text) is None               # 別の日は別の日報
+
+
+def test_post_ids_keep_counting_after_9999():
+    import database as db
+    import tsumugu
+    tsumugu.run(tsumugu.new_post("C004", None, "E005", "2026-09-22", "訪問。", post_id="P-9999"), use_llm=False)
+    a = db.next_post_id()
+    tsumugu.run(tsumugu.new_post("C004", None, "E005", "2026-09-22", "訪問。別件。", post_id=a), use_llm=False)
+    assert int(db.next_post_id()[2:]) == int(a[2:]) + 1                                # 同じ ID を二度出さない（上書きしない）
+
