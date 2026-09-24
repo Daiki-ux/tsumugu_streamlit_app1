@@ -93,6 +93,14 @@ div[data-testid="stVerticalBlock"] > div {{ margin-bottom: 2px; }}
 .legacy .it .lb {{ font-size:11.5px; font-weight:700; color:#2E7D5B; }}
 .legacy .it .hd2 {{ font-size:22px; font-weight:800; color:{INK}; line-height:1.3; margin:2px 0; }}
 .legacy .it .dt {{ font-size:12px; color:{SUB}; line-height:1.5; }}
+.legacy .it.wide {{ grid-column:span 2; }}
+@media (max-width: 700px) {{ .legacy .it.wide {{ grid-column:auto; }} }}
+.legacy .en {{ padding:6px 0; border-top:1px solid #E6F1EA; }}
+.legacy .en:first-of-type {{ border-top:none; padding-top:2px; }}
+.legacy .en .nm {{ font-size:16px; font-weight:800; color:{INK}; line-height:1.4; }}
+.legacy .en .hl {{ font-size:12px; font-weight:700; color:#1F5E43; background:#E2F1E8; border-radius:999px; padding:1px 9px; margin-left:8px; }}
+.legacy .en .uc {{ font-size:10.5px; color:#8A5A12; border:1px dashed #9A6410; border-radius:6px; padding:0 6px; margin-left:6px; }}
+.legacy .ft {{ font-size:11px; color:#3F6B57; margin-top:8px; }}
 .sum {{ border:1px solid {LINE}; border-radius:10px; background:#FAFBFC; padding:10px 16px 8px; margin:0 0 14px; }}
 .sum .top {{ display:flex; flex-wrap:wrap; align-items:center; gap:4px 10px; padding-bottom:8px; border-bottom:1px solid #EDEFF2; }}
 .sum .st {{ border-radius:999px; padding:3px 12px; font-size:13.5px; font-weight:800; }}
@@ -196,10 +204,14 @@ def srcs(sources):
 
 
 def chips_html(tags, statics):
-    """担当者向けの予兆チップ。候補タグや「重なりに数える／数えない」など判定の仕組みの言葉は出さない（運営側の話。変更記録 CH-25）"""
+    """担当者向けの予兆チップ。候補タグや「重なりに数える／数えない」など判定の仕組みの言葉は出さない（運営側の話。変更記録 CH-25）
+    面談メモ由来の予兆には「最後に記録された時期」を添える。今も続いているかは担当者が確かめる（変更記録 CH-28）"""
     out = []
-    for t in tags:
-        out.append(f"<span class='chip' style='background:#FCF1DA;color:#8A5A12'>● {escape(t['name'])}</span>")
+    for t in sorted(tags, key=lambda t: max(x["date"] for x in t["sources"]), reverse=True):
+        last = max(t["sources"], key=lambda x: x["date"])
+        when = ym(last["date"]) + ("・未確認" if last.get("unconfirmed") else "")
+        out.append(f"<span class='chip' style='background:#FCF1DA;color:#8A5A12'>● {escape(t['name'])}"
+                   f"<span style='font-weight:500;font-size:11.5px'>（最後：{escape(when)}）</span></span>")
     for x in statics:
         out.append(f"<span class='chip' style='background:#EEF0F3;color:#44506A'>◆ {escape(x['text'])}</span>")
     return "".join(out) or f"<span style='color:{SUB};font-size:13px'>まだ予兆タグは付いていません</span>"
@@ -215,14 +227,32 @@ def card_signals(sig):
 
 def legacy_band(items, note="この企業が地域で担っていること。承継の対話で、社長と一緒に大切にしたいものです"):
     """次の世代につなぎたいもの。企画の芯なので、前向きな色（緑）の帯で目立たせる（警告の色は使わない）
-    items＝tsumugu.legacy_items の [{label, head, detail, source}]"""
+    items＝tsumugu.legacy_items のまとまり。雇用・取引は数字を大きく、技術・ノウハウは横長のタイルに複数並べる（名前・担い手・出どころ）"""
     if not items:
         return
-    cells = "".join(f"<div class='it'><div class='lb'>{escape(x['label'])}</div><div class='hd2'>{escape(x['head'])}</div>"
-                    f"<div class='dt'>{escape(x['detail'] or '')}{'　' if x['detail'] else ''}"
-                    f"<span style='opacity:.75'>（{escape(x['source'])}）</span></div></div>" for x in items)
+    cells, by = "", set()
+    for x in items:
+        if x.get("entries"):
+            rows = ""
+            for e in x["entries"]:
+                by.add(e.get("by"))
+                holder = (f"<span class='hl'>担い手：{escape(e['holder'])}</span>") if e.get("holder") else ""
+                unc = "<span class='uc'>未確認</span>" if e.get("unconfirmed") else ""
+                rows += (f"<div class='en'><div class='nm'>● {escape(e['name'])}{holder}</div>"
+                         f"<div class='dt'>{escape(e['detail'] or '')}{'　' if e['detail'] else ''}"
+                         f"<span style='opacity:.75'>（{escape(e['source'])}）</span>{unc}</div></div>")
+            cells += (f"<div class='it wide'><div class='lb'>{escape(x['label'])}（{len(x['entries'])}件）</div>{rows}</div>")
+        else:
+            cells += (f"<div class='it'><div class='lb'>{escape(x['label'])}</div><div class='hd2'>{escape(x['head'])}</div>"
+                      f"<div class='dt'>{escape(x['detail'] or '')}{'　' if x['detail'] else ''}"
+                      f"<span style='opacity:.75'>（{escape(x['source'])}）</span></div></div>")
+    foot = ""
+    if "llm-sim" in by:
+        foot = "<div class='ft'>技術名と担い手は、AI が日報から取り出したものです（このデモでは、あらかじめ用意した結果で AI の処理を模擬しています）</div>"
+    elif "llm" in by:
+        foot = "<div class='ft'>技術名と担い手は、AI が日報から取り出したものです。元の記述と出どころで確かめられます</div>"
     st.markdown(f"<div class='legacy'><div class='lh'><span class='t'>🌱 次の世代につなぎたいもの</span>"
-                f"<span class='n'>{escape(note)}</span></div><div class='grid'>{cells}</div></div>", unsafe_allow_html=True)
+                f"<span class='n'>{escape(note)}</span></div><div class='grid'>{cells}</div>{foot}</div>", unsafe_allow_html=True)
 
 
 def card_questions(questions, title="次回訪問で確認するとよいこと", note="AI からの提案です。実際に何を聞くかは担当者が決めます"):
@@ -492,6 +522,11 @@ def page_company():
 
     c1, c2 = st.columns([1.1, 1], gap="medium")
     with c1:
+        years = tsumugu.RULES["gate"]["window_months"] // 12
+        st.markdown(f"<div class='card'><div class='hd'>これまでの記録に出てきた予兆（過去{years}年）</div>"
+                    f"<div class='note'>● 面談メモから（最後に記録された時期）　◆ 顧客データから。"
+                    f"今も続いているとは限りません。判定ではありません</div>"
+                    f"{chips_html(v['tags'], v['statics'])}</div>", unsafe_allow_html=True)
         summary = tsumugu.pre_visit_summary(cid, as_of=TODAY.isoformat(), limit=4)
         if summary:
             card("訪問前のまとめ（これまでの記録から）",
@@ -501,9 +536,6 @@ def page_company():
         if v["next_actions"]:
             card_questions(v["next_actions"]["questions"], "この訪問でお客さまに確かめること",
                            "社長や社員の方に。AI からの提案です。実際に何を聞くかは担当者が決めます")
-        st.markdown(f"<div class='card'><div class='hd'>検出された予兆タグ</div>"
-                    f"<div class='note'>● 面談メモから　　◆ 顧客データから</div>"
-                    f"{chips_html(v['tags'], v['statics'])}</div>", unsafe_allow_html=True)
     with c2:
         with st.container(height=640, border=False):
             card_memos(posts)

@@ -255,3 +255,15 @@ def test_post_ids_keep_counting_after_9999():
     tsumugu.run(tsumugu.new_post("C004", None, "E005", "2026-09-22", "訪問。別件。", post_id=a), use_llm=False)
     assert int(db.next_post_id()[2:]) == int(a[2:]) + 1                                # 同じ ID を二度出さない（上書きしない）
 
+
+
+def test_several_technologies_with_holder():
+    """技術・ノウハウは複数並べる。日報から取り出したものには担い手と出どころを付け、同じ技術は 1 つにまとめる"""
+    import os
+    import tsumugu
+    assert os.environ.get("TSUMUGU_NO_LLM") == "1"                                # LLM なし → 模擬結果（docs/value_extractions.json）
+    tech = next(g for g in tsumugu.company_state("C001", as_of="2026-09-15")["legacy"] if g["tag"] == "V_TECHNOLOGY")
+    names = [e["name"] for e in tech["entries"]]
+    assert names == ["特殊薄板加工", "手作業による薄板加工の勘"]                    # 「薄板加工、今期も安定」は同じ技術なので重ねない
+    kan = tech["entries"][1]
+    assert kan["holder"] == "斎藤工場長" and kan["unconfirmed"] and kan["by"] == "llm-sim" and "林" in kan["source"]
