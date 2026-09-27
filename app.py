@@ -86,6 +86,17 @@ div[data-testid="stVerticalBlock"] > div {{ margin-bottom: 2px; }}
 .st-key-pilot_survey .sv-q {{ font-size:15px; font-weight:800; color:{INK}; }}
 .st-key-pilot_survey .sv-nt {{ font-size:11.5px; color:{SUB}; margin:4px 0 8px; }}
 .st-key-pilot_survey button p {{ font-size:13px; }}
+/* 予兆ごとのまとめ（取引先・訪問前） */
+.card .dg-st {{ display:flex; flex-wrap:wrap; align-items:center; gap:2px 4px; padding:2px 0 8px; border-bottom:1px solid #F1F2F4; }}
+.card .dg-lb {{ font-size:11px; color:{SUB}; margin-right:6px; }}
+.card .dg {{ padding:10px 0; border-top:1px solid #F1F2F4; }}
+.card .dg-st + .dg {{ border-top:none; }}
+.card .dg-h {{ display:flex; flex-wrap:wrap; align-items:baseline; gap:2px 10px; }}
+.card .dg-n {{ font-size:14.5px; font-weight:800; color:#8A5A12; }}
+.card .dg-w {{ font-size:11.5px; color:{SUB}; }}
+.card .dg-q {{ font-size:13.5px; color:{INK}; line-height:1.7; margin-top:3px; }}
+.card .dg-q .uc {{ font-size:10.5px; color:#8A5A12; border:1px dashed #9A6410; border-radius:6px; padding:0 6px; margin-left:6px; white-space:nowrap; }}
+.card .dg-old {{ font-size:11px; color:{SUB}; margin-top:3px; }}
 .sec {{ display:flex; flex-wrap:wrap; align-items:center; gap:4px 10px; margin:26px 0 10px; padding-bottom:6px; border-bottom:1px solid {LINE}; }}
 .sec .no {{ background:#2F5D8A; color:#fff; border-radius:999px; min-width:22px; height:22px; display:inline-flex; align-items:center;
             justify-content:center; font-size:12px; font-weight:800; }}
@@ -210,20 +221,6 @@ def srcs(sources):
                    f"{escape(ym(x['date']))}・{escape(x['author'])}　未確認（雑談などで聞いた話）</span>" for x in sources)
 
 
-def chips_html(tags, statics):
-    """担当者向けの予兆チップ。候補タグや「重なりに数える／数えない」など判定の仕組みの言葉は出さない（運営側の話。変更記録 CH-25）
-    面談メモ由来の予兆には「最後に記録された時期」を添える。今も続いているかは担当者が確かめる（変更記録 CH-28）"""
-    out = []
-    for t in sorted(tags, key=lambda t: max(x["date"] for x in t["sources"]), reverse=True):
-        last = max(t["sources"], key=lambda x: x["date"])
-        when = ym(last["date"]) + ("・未確認" if last.get("unconfirmed") else "")
-        out.append(f"<span class='chip' style='background:#FCF1DA;color:#8A5A12'>● {escape(t['name'])}"
-                   f"<span style='font-weight:500;font-size:11.5px'>（最後：{escape(when)}）</span></span>")
-    for x in statics:
-        out.append(f"<span class='chip' style='background:#EEF0F3;color:#44506A'>◆ {escape(x['text'])}</span>")
-    return "".join(out) or f"<span style='color:{SUB};font-size:13px'>まだ予兆タグは付いていません</span>"
-
-
 def card_signals(sig):
     """重なった予兆（出典つき）。1 予兆＝1 行"""
     rows = "".join(row(s["name"], chips_html=srcs(s["sources"])) for s in sig["tags"])
@@ -314,7 +311,31 @@ def card_public(refs, title="関連する公的な支援制度・法令"):
          "公的機関のページです（crawler.py で収集）。お客さまへの案内や、制度を確かめるときの参考に")
 
 
-def card_memos(posts):
+def card_signal_digest(tags, statics, years):
+    """訪問前に読む「予兆ごとのまとめ」。予兆 1 つ＝1 ブロック：名前・最後に記録された時期と書いた人・その記録の該当する一文、
+    それより前の記録は小さな出典で。顧客データ（年齢・業歴）は上に 1 行（変更記録 CH-32）"""
+    head = ""
+    if statics:
+        head = (f"<div class='dg-st'><span class='dg-lb'>顧客データ</span>"
+                + "".join(f"<span class='chip s' style='background:#EEF0F3;color:#44506A'>◆ {escape(x['text'])}</span>" for x in statics)
+                + "</div>")
+    blocks = ""
+    for t in sorted(tags, key=lambda t: max(x["date"] for x in t["sources"]), reverse=True):
+        src = sorted(t["sources"], key=lambda x: x["date"], reverse=True)
+        last, older = src[0], src[1:]
+        unc = "<span class='uc'>未確認（雑談などで聞いた話）</span>" if last.get("unconfirmed") else ""
+        more = ("<div class='dg-old'>それより前の記録　" + srcs(older) + "</div>") if older else ""
+        blocks += (f"<div class='dg'><div class='dg-h'><span class='dg-n'>● {escape(t['name'])}</span>"
+                   f"<span class='dg-w'>最後：{escape(ym(last['date']))}・{escape(last['author'])}　（記録 {len(src)} 件）</span></div>"
+                   f"<div class='dg-q'>「{escape(last['evidence'] or '')}」{unc}</div>{more}</div>")
+    if not blocks:
+        blocks = f"<div style='color:{SUB};font-size:13px;padding:6px 0'>これまでの記録に、予兆に関わるものはありません</div>"
+    st.markdown(f"<div class='card'><div class='hd'>これまでの記録に出てきた予兆（過去{years}年）</div>"
+                f"<div class='note'>予兆ごとに、最後に記録された一文を引いています。今も続いているとは限りません。判定ではありません</div>"
+                f"{head}{blocks}</div>", unsafe_allow_html=True)
+
+
+def card_memos(posts, title="面談メモ履歴", note="新しい順。担当者が代わっても記録は残ります"):
     rows, last_author = "", None
     for p in reversed(posts):
         if last_author and p["author_name"] != last_author:
@@ -328,7 +349,7 @@ def card_memos(posts):
             tg += "<span class='chip s' style='background:#fff;border:1px dashed #9A6410;color:#8A5A12'>未確認の話を含む</span>"
         act = f"{p['activity']}｜" if p.get("activity") else ""
         rows += row(f"{p['posted_at']}　{p['author_name']}", body=p["text"], sub=act + src, chips_html=tg)
-    card("面談メモ履歴", rows, "新しい順。担当者が代わっても記録は残ります")
+    card(title, rows, note)
 
 
 def people_block(people, company, me):
@@ -529,23 +550,17 @@ def page_company():
 
     c1, c2 = st.columns([1.1, 1], gap="medium")
     with c1:
-        years = tsumugu.RULES["gate"]["window_months"] // 12
-        st.markdown(f"<div class='card'><div class='hd'>これまでの記録に出てきた予兆（過去{years}年）</div>"
-                    f"<div class='note'>● 面談メモから（最後に記録された時期）　◆ 顧客データから。"
-                    f"今も続いているとは限りません。判定ではありません</div>"
-                    f"{chips_html(v['tags'], v['statics'])}</div>", unsafe_allow_html=True)
-        summary = tsumugu.pre_visit_summary(cid, as_of=TODAY.isoformat(), limit=4)
-        if summary:
-            card("訪問前のまとめ（これまでの記録から）",
-                 "".join(row(s["name"], body=s["text"], chips_html=srcs([{"date": s["date"], "author": s["author"] or "", "unconfirmed": s["unconfirmed"]}]))
-                         for s in summary),
-                 "予兆に関わる記録を新しい順に。どれも元の記録をそのまま引いています")
+        card_signal_digest(v["tags"], v["statics"], tsumugu.RULES["gate"]["window_months"] // 12)
         if v["next_actions"]:
             card_questions(v["next_actions"]["questions"], "この訪問でお客さまに確かめること",
                            "社長や社員の方に。AI からの提案です。実際に何を聞くかは担当者が決めます")
     with c2:
+        only = st.segmented_control("面談メモの表示", ["すべて", "予兆に関わる記録だけ"], default="すべて",
+                                    key=f"memo_filter_{cid}", label_visibility="collapsed") == "予兆に関わる記録だけ"
+        shown = [p for p in posts if any(t["tier"] == "formal" for t in p["tags"])] if only else posts
         with st.container(height=640, border=False):
-            card_memos(posts)
+            card_memos(shown, note=(f"予兆に関わる記録 {len(shown)} 件（全 {len(posts)} 件）。新しい順" if only
+                                    else "新しい順。担当者が代わっても記録は残ります"))
     st.caption("前任者たちの記録を読むことで、着任初日から担当企業の状況を把握できます（書かなくても得られる価値）。")
 
 
