@@ -87,10 +87,10 @@ div[data-testid="stVerticalBlock"] > div {{ margin-bottom: 2px; }}
 .st-key-pilot_survey .sv-nt {{ font-size:11.5px; color:{SUB}; margin:4px 0 8px; }}
 .st-key-pilot_survey button p {{ font-size:13px; }}
 /* 予兆ごとのまとめ（取引先・訪問前） */
-.card .dg-st {{ display:flex; flex-wrap:wrap; align-items:center; gap:2px 4px; padding:2px 0 8px; border-bottom:1px solid #F1F2F4; }}
-.card .dg-lb {{ font-size:11px; color:{SUB}; margin-right:6px; }}
+.card .dg-st {{ display:flex; flex-wrap:wrap; align-items:center; gap:2px 0; padding:2px 0 0; }}
+.card .dg-lg {{ font-size:10.5px; color:{SUB}; padding:4px 0 6px; border-bottom:1px solid #F1F2F4; }}
 .card .dg {{ padding:10px 0; border-top:1px solid #F1F2F4; }}
-.card .dg-st + .dg {{ border-top:none; }}
+.card .dg-lg + .dg {{ border-top:none; }}
 .card .dg-h {{ display:flex; flex-wrap:wrap; align-items:baseline; gap:2px 10px; }}
 .card .dg-n {{ font-size:14.5px; font-weight:800; color:#8A5A12; }}
 .card .dg-w {{ font-size:11.5px; color:{SUB}; }}
@@ -312,15 +312,21 @@ def card_public(refs, title="関連する公的な支援制度・法令"):
 
 
 def card_signal_digest(tags, statics, years):
-    """訪問前に読む「予兆ごとのまとめ」。予兆 1 つ＝1 ブロック：名前・最後に記録された時期と書いた人・その記録の該当する一文、
-    それより前の記録は小さな出典で。顧客データ（年齢・業歴）は上に 1 行（変更記録 CH-32）"""
-    head = ""
-    if statics:
-        head = (f"<div class='dg-st'><span class='dg-lb'>顧客データ</span>"
-                + "".join(f"<span class='chip s' style='background:#EEF0F3;color:#44506A'>◆ {escape(x['text'])}</span>" for x in statics)
-                + "</div>")
+    """訪問前に読む「これまでの記録に出てきた予兆」。上にチップ一覧（ひと目で把握）、下に予兆 1 つ＝1 ブロック：
+    名前・最後に記録された時期と書いた人・その記録の該当する一文、それより前の記録は小さな出典で（変更記録 CH-32）"""
+    ordered = sorted(tags, key=lambda t: max(x["date"] for x in t["sources"]), reverse=True)
+    # 一番上：どんな予兆が出ているかをひと目で（チップ一覧）。下：予兆ごとの一文と出典
+    chips = ""
+    for t in ordered:
+        last = max(t["sources"], key=lambda x: x["date"])
+        when = ym(last["date"]) + ("・未確認" if last.get("unconfirmed") else "")
+        chips += (f"<span class='chip' style='background:#FCF1DA;color:#8A5A12'>● {escape(t['name'])}"
+                  f"<span style='font-weight:500;font-size:11.5px'>（最後：{escape(when)}）</span></span>")
+    chips += "".join(f"<span class='chip' style='background:#EEF0F3;color:#44506A'>◆ {escape(x['text'])}</span>" for x in statics)
+    head = (f"<div class='dg-st'>{chips}</div>"
+            f"<div class='dg-lg'>● 面談メモから（最後に記録された時期）　◆ 顧客データから</div>") if chips else ""
     blocks = ""
-    for t in sorted(tags, key=lambda t: max(x["date"] for x in t["sources"]), reverse=True):
+    for t in ordered:
         src = sorted(t["sources"], key=lambda x: x["date"], reverse=True)
         last, older = src[0], src[1:]
         unc = "<span class='uc'>未確認（雑談などで聞いた話）</span>" if last.get("unconfirmed") else ""
@@ -331,7 +337,7 @@ def card_signal_digest(tags, statics, years):
     if not blocks:
         blocks = f"<div style='color:{SUB};font-size:13px;padding:6px 0'>これまでの記録に、予兆に関わるものはありません</div>"
     st.markdown(f"<div class='card'><div class='hd'>これまでの記録に出てきた予兆（過去{years}年）</div>"
-                f"<div class='note'>予兆ごとに、最後に記録された一文を引いています。今も続いているとは限りません。判定ではありません</div>"
+                f"<div class='note'>今も続いているとは限りません。判定ではありません。下に、予兆ごとに最後に記録された一文を引いています</div>"
                 f"{head}{blocks}</div>", unsafe_allow_html=True)
 
 
