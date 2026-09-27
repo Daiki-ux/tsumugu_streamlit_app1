@@ -94,7 +94,12 @@ div[data-testid="stVerticalBlock"] > div {{ margin-bottom: 2px; }}
 .card .dg-h {{ display:flex; flex-wrap:wrap; align-items:baseline; gap:2px 10px; }}
 .card .dg-n {{ font-size:14.5px; font-weight:800; color:#8A5A12; }}
 .card .dg-w {{ font-size:11.5px; color:{SUB}; }}
-.card .dg-q {{ font-size:13.5px; color:{INK}; line-height:1.7; margin-top:3px; }}
+.card .dg-q {{ font-size:13.5px; color:{INK}; line-height:1.7; }}
+.card .dg-l {{ display:grid; grid-template-columns:11em 1fr; gap:0 10px; align-items:baseline; margin-top:6px; padding-left:14px; }}
+@media (max-width: 640px) {{ .card .dg-l {{ grid-template-columns:1fr; }} }}
+.card .dg-wh {{ font-size:11.5px; color:{SUB}; white-space:nowrap; }}
+.card .dg-l .dg-q b {{ color:{INK}; font-weight:700; background:#FFF6E3; }}
+.card .dg-l .uc {{ font-size:10.5px; color:#8A5A12; border:1px dashed #9A6410; border-radius:6px; padding:0 6px; margin-left:6px; white-space:nowrap; }}
 .card .dg-q .uc {{ font-size:10.5px; color:#8A5A12; border:1px dashed #9A6410; border-radius:6px; padding:0 6px; margin-left:6px; white-space:nowrap; }}
 .card .dg-old {{ font-size:11px; color:{SUB}; margin-top:3px; }}
 .sec {{ display:flex; flex-wrap:wrap; align-items:center; gap:4px 10px; margin:26px 0 10px; padding-bottom:6px; border-bottom:1px solid {LINE}; }}
@@ -331,21 +336,33 @@ def card_signal_chips(tags, statics, years):
                 f"{body}</div>", unsafe_allow_html=True)
 
 
-def card_signal_records(tags):
-    """予兆ごとの記録（タブの中）。予兆 1 つ＝1 ブロック：名前・最後に記録された時期と書いた人・その記録の該当する一文、
-    それより前の記録は小さな出典で"""
+def _with_bold(text, ev):
+    """記録の本文を出し、予兆の根拠になった一文だけ太字にする（一文だけだと前後の文脈が分からないため）"""
+    text, ev = text or "", ev or ""
+    if ev and ev in text:
+        a, _, b = text.partition(ev)
+        return f"{escape(a)}<b>{escape(ev)}</b>{escape(b)}"
+    return f"<b>{escape(ev or text)}</b>"
+
+
+def card_signal_records(tags, posts):
+    """予兆ごとの記録（タブの中）。予兆ごとに、担当者をまたいだ記録を新しい順に「時期・書いた人・該当する一文」で並べる。
+    同じ予兆で、林さん（2024年）と佐々木さん（2026年）の記録がつながって見えるようにする（変更記録 CH-35）"""
+    text_of = {p["id"]: p["text"] for p in posts}
     blocks = ""
     for t in _by_latest(tags):
         src = sorted(t["sources"], key=lambda x: x["date"], reverse=True)
-        last, older = src[0], src[1:]
-        unc = "<span class='uc'>未確認（雑談などで聞いた話）</span>" if last.get("unconfirmed") else ""
-        more = ("<div class='dg-old'>それより前の記録　" + srcs(older) + "</div>") if older else ""
+        authors = len({x["author"] for x in src})
+        lines = "".join(
+            f"<div class='dg-l'><span class='dg-wh'>{escape(ym(x['date']))}・{escape(x['author'])}</span>"
+            f"<span class='dg-q'>{_with_bold(text_of.get(x['post_id'], ''), x['evidence'])}"
+            f"{'<span class=uc>未確認（雑談などで聞いた話）</span>' if x.get('unconfirmed') else ''}</span></div>" for x in src)
         blocks += (f"<div class='dg'><div class='dg-h'><span class='dg-n'>● {escape(t['name'])}</span>"
-                   f"<span class='dg-w'>最後：{escape(ym(last['date']))}・{escape(last['author'])}　（記録 {len(src)} 件）</span></div>"
-                   f"<div class='dg-q'>「{escape(last['evidence'] or '')}」{unc}</div>{more}</div>")
+                   f"<span class='dg-w'>記録 {len(src)} 件" + (f"・{authors} 人の担当者" if authors > 1 else "") + "</span></div>"
+                   f"{lines}</div>")
     if not blocks:
         blocks = f"<div style='color:{SUB};font-size:13px;padding:6px 0'>これまでの記録に、予兆に関わるものはありません</div>"
-    card("", blocks, "予兆ごとに、最後に記録された一文を引いています。どれも元の記録のままです")
+    card("", blocks, "予兆ごとに、担当者をまたいだ記録を新しい順に並べています。太字は、その予兆の根拠になった文です")
 
 
 def card_company_data(c, v, assignments):
@@ -598,13 +615,10 @@ def page_company():
     t1, t2, t3 = st.tabs([f"予兆ごとの記録（{len(v['tags'])}）", f"面談メモ履歴（{len(posts)}）",
                           "顧客データ・担当の移り変わり"])
     with t1:
-        card_signal_records(v["tags"])
+        card_signal_records(v["tags"], posts)
     with t2:
-        only = st.segmented_control("面談メモの表示", ["すべての記録", "予兆に関わる記録だけ"], default="すべての記録",
-                                    key=f"memo_filter_{cid}", label_visibility="collapsed") == "予兆に関わる記録だけ"
-        shown = [p for p in posts if any(t["tier"] == "formal" for t in p["tags"])] if only else posts
-        scope = f"予兆に関わる記録 {len(shown)} 件（全 {len(posts)} 件）" if only else f"全 {len(posts)} 件"
-        card_memos(shown, title="", note=f"{scope}。新しい順。担当交代の区切り入り。担当者が代わっても記録は残ります")
+        # 全件を日付順に読むタブ。予兆に関わる記録は「予兆ごとの記録」タブで読む（絞り込みは重複になるのでやめた。CH-35）
+        card_memos(posts, title="", note=f"全 {len(posts)} 件。新しい順。担当交代の区切り入り。担当者が代わっても記録は残ります")
     with t3:
         card_company_data(c, v, assignments)
     st.caption("前任者たちの記録を読むことで、着任初日から担当企業の状況を把握できます（書かなくても得られる価値）。")
