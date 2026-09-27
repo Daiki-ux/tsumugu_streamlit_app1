@@ -311,22 +311,31 @@ def card_public(refs, title="関連する公的な支援制度・法令"):
          "公的機関のページです（crawler.py で収集）。お客さまへの案内や、制度を確かめるときの参考に")
 
 
-def card_signal_digest(tags, statics, years):
-    """訪問前に読む「これまでの記録に出てきた予兆」。上にチップ一覧（ひと目で把握）、下に予兆 1 つ＝1 ブロック：
-    名前・最後に記録された時期と書いた人・その記録の該当する一文、それより前の記録は小さな出典で（変更記録 CH-32）"""
-    ordered = sorted(tags, key=lambda t: max(x["date"] for x in t["sources"]), reverse=True)
-    # 一番上：どんな予兆が出ているかをひと目で（チップ一覧）。下：予兆ごとの一文と出典
+def _by_latest(tags):
+    return sorted(tags, key=lambda t: max(x["date"] for x in t["sources"]), reverse=True)
+
+
+def card_signal_chips(tags, statics, years):
+    """どんな予兆が出ているかをひと目で（チップ一覧）。取引先画面の上に常に出す（変更記録 CH-34）"""
     chips = ""
-    for t in ordered:
+    for t in _by_latest(tags):
         last = max(t["sources"], key=lambda x: x["date"])
         when = ym(last["date"]) + ("・未確認" if last.get("unconfirmed") else "")
         chips += (f"<span class='chip' style='background:#FCF1DA;color:#8A5A12'>● {escape(t['name'])}"
                   f"<span style='font-weight:500;font-size:11.5px'>（最後：{escape(when)}）</span></span>")
     chips += "".join(f"<span class='chip' style='background:#EEF0F3;color:#44506A'>◆ {escape(x['text'])}</span>" for x in statics)
-    head = (f"<div class='dg-st'>{chips}</div>"
-            f"<div class='dg-lg'>● 面談メモから（最後に記録された時期）　◆ 顧客データから</div>") if chips else ""
+    body = (f"<div class='dg-st'>{chips}</div><div class='dg-lg' style='border-bottom:none'>● 面談メモから（最後に記録された時期）　◆ 顧客データから</div>"
+            if chips else f"<div style='color:{SUB};font-size:13px'>これまでの記録に、予兆に関わるものはありません</div>")
+    st.markdown(f"<div class='card'><div class='hd'>これまでの記録に出てきた予兆（過去{years}年）</div>"
+                f"<div class='note'>今も続いているとは限りません。判定ではありません。中身は下の「予兆ごとの記録」で読めます</div>"
+                f"{body}</div>", unsafe_allow_html=True)
+
+
+def card_signal_records(tags):
+    """予兆ごとの記録（タブの中）。予兆 1 つ＝1 ブロック：名前・最後に記録された時期と書いた人・その記録の該当する一文、
+    それより前の記録は小さな出典で"""
     blocks = ""
-    for t in ordered:
+    for t in _by_latest(tags):
         src = sorted(t["sources"], key=lambda x: x["date"], reverse=True)
         last, older = src[0], src[1:]
         unc = "<span class='uc'>未確認（雑談などで聞いた話）</span>" if last.get("unconfirmed") else ""
@@ -336,9 +345,31 @@ def card_signal_digest(tags, statics, years):
                    f"<div class='dg-q'>「{escape(last['evidence'] or '')}」{unc}</div>{more}</div>")
     if not blocks:
         blocks = f"<div style='color:{SUB};font-size:13px;padding:6px 0'>これまでの記録に、予兆に関わるものはありません</div>"
-    st.markdown(f"<div class='card'><div class='hd'>これまでの記録に出てきた予兆（過去{years}年）</div>"
-                f"<div class='note'>今も続いているとは限りません。判定ではありません。下に、予兆ごとに最後に記録された一文を引いています</div>"
-                f"{head}{blocks}</div>", unsafe_allow_html=True)
+    card("", blocks, "予兆ごとに、最後に記録された一文を引いています。どれも元の記録のままです")
+
+
+def card_company_data(c, v, assignments):
+    """顧客データ・担当の移り変わり（タブの中）。担当が何度替わっても、前任者たちの記録を読めることを示す"""
+    years = (TODAY.year - c["founded_year"]) if c.get("founded_year") else None
+    marks = {x["tag_id"]: x["text"] for x in v["statics"]}
+    rows = [("業種", c["industry"] or "—"), ("従業員", f"{c['employees']}名" if c["employees"] else "—"),
+            ("代表", f"{c['owner_name']}（{c['owner_age']}歳）" if c.get("owner_age") else (c["owner_name"] or "—")),
+            ("創業", f"{c['founded_year']}年（業歴{years}年）" if years else "—"),
+            ("後継者（顧客マスタ）", c["successor_status"] or "—"),
+            ("主要取引先", c["key_customers"] or "—"),
+            ("技術", (c["tech_note"] or "—").split("／")[0] or "—")]
+    table = "".join(f"<div class='row' style='display:flex;gap:12px'><div class='sub' style='min-width:9em;margin:0'>{escape(k)}</div>"
+                    f"<div class='body' style='margin:0'>{escape(str(val))}</div></div>" for k, val in rows)
+    if marks:
+        table += row("予兆として見ている顧客データ", chips_html="".join(
+            f"<span class='chip s' style='background:#EEF0F3;color:#44506A'>◆ {escape(t)}</span>" for t in marks.values()))
+    card("顧客データ", table, "SFA の取引先情報（顧客マスタ）から")
+    steps = ""
+    for a in assignments:
+        now = not a["to_date"]
+        period = f"{a['from_date'][:7]} 〜 {'現在' if now else a['to_date'][:7]}"
+        steps += row(f"{a['staff_name']}（{a['dept']}）" + ("　現在の担当" if now else ""), sub=period)
+    card("担当の移り変わり", steps or row("—"), "担当が替わっても、前任者たちの記録はこの画面で読めます")
 
 
 def card_memos(posts, title="面談メモ履歴", note="新しい順。担当者が代わっても記録は残ります"):
@@ -554,23 +585,28 @@ def page_company():
              "".join(row(f"{x['at'] or ''}　{x['from_name'] or ''}さんから", body=x["theme"]) for x in mine),
              "相談を受けた範囲として、この企業の記録を読めます", accent="#2F5D8A")
 
-    # 1 段組：何が出ているか → 何を聞くか → （必要なら）全部の記録、の順に上から読む（変更記録 CH-33）
-    card_signal_digest(v["tags"], v["statics"], tsumugu.RULES["gate"]["window_months"] // 12)
+    # 常に見える：予兆のチップ一覧 → この訪問でお客さまに確かめること（状態と「次の世代につなぎたいもの」はその上）
+    # タブ：予兆ごとの記録／面談メモ履歴／顧客データ・担当の移り変わり（変更記録 CH-34）
+    card_signal_chips(v["tags"], v["statics"], tsumugu.RULES["gate"]["window_months"] // 12)
     if v["next_actions"]:
         card_questions(v["next_actions"]["questions"], "この訪問でお客さまに確かめること",
                        "社長や社員の方に。AI からの提案です。実際に何を聞くかは担当者が決めます")
 
-    # 面談メモ履歴：参照用。最新 5 件だけ出し、「すべて表示」で残りも。予兆に関わる記録だけに絞ることもできる
-    st.markdown(f"<div style='font-size:15px;font-weight:800;color:{INK};margin:10px 0 4px'>面談メモ履歴</div>", unsafe_allow_html=True)
-    f1, f2 = st.columns([3, 1.2], vertical_alignment="center")
-    only = f1.segmented_control("面談メモの表示", ["すべての記録", "予兆に関わる記録だけ"], default="すべての記録",
-                                key=f"memo_filter_{cid}", label_visibility="collapsed") == "予兆に関わる記録だけ"
-    shown = [p for p in posts if any(t["tier"] == "formal" for t in p["tags"])] if only else posts
-    show_all = f2.toggle(f"すべて表示（{len(shown)} 件）", key=f"memo_all_{cid}", disabled=len(shown) <= MEMO_LATEST)
-    part = shown if show_all else shown[-MEMO_LATEST:]
-    scope = f"予兆に関わる記録 {len(shown)} 件（全 {len(posts)} 件）" if only else f"全 {len(posts)} 件"
-    how = "新しい順にすべて" if len(part) == len(shown) else f"新しい順に {len(part)} 件"
-    card_memos(part, title="", note=f"{scope}のうち、{how}。担当者が代わっても記録は残ります")
+    st.markdown(f"<div style='font-size:15px;font-weight:800;color:{INK};margin:14px 0 4px'>記録を読む"
+                f"<span style='font-size:12px;font-weight:500;color:{SUB}'>　ボタンで切り替え</span></div>", unsafe_allow_html=True)
+    assignments = db.get_assignments(cid)
+    t1, t2, t3 = st.tabs([f"予兆ごとの記録（{len(v['tags'])}）", f"面談メモ履歴（{len(posts)}）",
+                          "顧客データ・担当の移り変わり"])
+    with t1:
+        card_signal_records(v["tags"])
+    with t2:
+        only = st.segmented_control("面談メモの表示", ["すべての記録", "予兆に関わる記録だけ"], default="すべての記録",
+                                    key=f"memo_filter_{cid}", label_visibility="collapsed") == "予兆に関わる記録だけ"
+        shown = [p for p in posts if any(t["tier"] == "formal" for t in p["tags"])] if only else posts
+        scope = f"予兆に関わる記録 {len(shown)} 件（全 {len(posts)} 件）" if only else f"全 {len(posts)} 件"
+        card_memos(shown, title="", note=f"{scope}。新しい順。担当交代の区切り入り。担当者が代わっても記録は残ります")
+    with t3:
+        card_company_data(c, v, assignments)
     st.caption("前任者たちの記録を読むことで、着任初日から担当企業の状況を把握できます（書かなくても得られる価値）。")
 
 
@@ -673,7 +709,6 @@ def show_reaction(r):
                     st.toast(f"記録しました：{label}（ご協力ありがとうございます）")
 
 
-MEMO_LATEST = 5                                  # 取引先画面の面談メモ履歴で、最初に見せる件数
 ACTIVITIES = ["定例訪問", "決算説明", "資金のご相談", "着任・ご挨拶", "支店長同行", "その他"]
 
 
