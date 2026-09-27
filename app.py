@@ -87,34 +87,34 @@ div[data-testid="stVerticalBlock"] > div {{ margin-bottom: 2px; }}
 .st-key-pilot_survey .sv-nt {{ font-size:11.5px; color:{SUB}; margin:4px 0 8px; }}
 .st-key-pilot_survey button p {{ font-size:13px; }}
 /* 予兆ごとのまとめ（取引先・訪問前） */
-.card .dg-st {{ display:flex; flex-wrap:wrap; align-items:center; gap:2px 0; padding:2px 0 0; }}
+:is(.card, .st-key-signal_chips) .dg-st {{ display:flex; flex-wrap:wrap; align-items:center; gap:2px 0; padding:2px 0 0; }}
 /* 予兆のチップ（押すと絞り込み）：カードの見た目に揃える */
 .st-key-signal_chips {{ border:1px solid {LINE}; border-radius:12px; padding:16px 18px 10px; margin-bottom:14px; background:#fff; }}
 .st-key-signal_chips .hd {{ font-size:15px; font-weight:800; color:{INK}; margin-bottom:4px; }}
 .st-key-signal_chips .note {{ font-size:11px; color:{SUB}; margin-bottom:6px; }}
 .st-key-signal_chips .dg-st {{ display:flex; flex-wrap:wrap; gap:2px 0; }}
-.st-key-signal_chips .dg-lg {{ font-size:10.5px; color:{SUB}; padding:2px 0; }}
+.st-key-signal_chips .dg-lg {{ font-size:10.5px; color:{SUB}; padding:2px 0 8px; border-bottom:1px solid #F1F2F4; }}
 .st-key-signal_chips [data-testid="stButtonGroup"] button {{ background:#FCF1DA; border:1px solid #F0DDB5; border-radius:999px; cursor:pointer; }}
 .st-key-signal_chips [data-testid="stButtonGroup"] button p {{ color:#8A5A12; font-weight:700; font-size:13px; }}
 .st-key-signal_chips [data-testid="stButtonGroup"] button:hover {{ background:#F8E6BF; }}
 .st-key-signal_chips [data-testid="stButtonGroup"] button[aria-pressed="true"] {{ background:#9A6410 !important; border-color:#9A6410 !important; }}
 .st-key-signal_chips [data-testid="stButtonGroup"] button[aria-pressed="true"] p {{ color:#fff !important; }}
-.card .dg-flt {{ font-size:12px; font-weight:700; color:#8A5A12; background:#FFF6E3; border-radius:8px; padding:6px 10px; margin-bottom:4px; }}
-.card .dg-flt span {{ font-weight:500; color:{SUB}; }}
-.card .dg-lg {{ font-size:10.5px; color:{SUB}; padding:4px 0 6px; border-bottom:1px solid #F1F2F4; }}
-.card .dg {{ padding:10px 0; border-top:1px solid #F1F2F4; }}
-.card .dg-lg + .dg {{ border-top:none; }}
-.card .dg-h {{ display:flex; flex-wrap:wrap; align-items:baseline; gap:2px 10px; }}
-.card .dg-n {{ font-size:14.5px; font-weight:800; color:#8A5A12; }}
-.card .dg-w {{ font-size:11.5px; color:{SUB}; }}
-.card .dg-q {{ font-size:13.5px; color:{INK}; line-height:1.7; }}
-.card .dg-l {{ display:grid; grid-template-columns:11em 1fr; gap:0 10px; align-items:baseline; margin-top:6px; padding-left:14px; }}
-@media (max-width: 640px) {{ .card .dg-l {{ grid-template-columns:1fr; }} }}
-.card .dg-wh {{ font-size:11.5px; color:{SUB}; white-space:nowrap; }}
-.card .dg-l .dg-q b {{ color:{INK}; font-weight:700; background:#FFF6E3; }}
-.card .dg-l .uc {{ font-size:10.5px; color:#8A5A12; border:1px dashed #9A6410; border-radius:6px; padding:0 6px; margin-left:6px; white-space:nowrap; }}
-.card .dg-q .uc {{ font-size:10.5px; color:#8A5A12; border:1px dashed #9A6410; border-radius:6px; padding:0 6px; margin-left:6px; white-space:nowrap; }}
-.card .dg-old {{ font-size:11px; color:{SUB}; margin-top:3px; }}
+:is(.card, .st-key-signal_chips) .dg-flt {{ font-size:12px; font-weight:700; color:#8A5A12; background:#FFF6E3; border-radius:8px; padding:6px 10px; margin-bottom:4px; }}
+:is(.card, .st-key-signal_chips) .dg-flt span {{ font-weight:500; color:{SUB}; }}
+:is(.card, .st-key-signal_chips) .dg-lg {{ font-size:10.5px; color:{SUB}; padding:4px 0 6px; border-bottom:1px solid #F1F2F4; }}
+:is(.card, .st-key-signal_chips) .dg {{ padding:10px 0; border-top:1px solid #F1F2F4; }}
+.dg-rec .note + .dg, .dg-rec .dg-flt + .dg {{ border-top:none; }}
+:is(.card, .st-key-signal_chips) .dg-h {{ display:flex; flex-wrap:wrap; align-items:baseline; gap:2px 10px; }}
+:is(.card, .st-key-signal_chips) .dg-n {{ font-size:14.5px; font-weight:800; color:#8A5A12; }}
+:is(.card, .st-key-signal_chips) .dg-w {{ font-size:11.5px; color:{SUB}; }}
+:is(.card, .st-key-signal_chips) .dg-q {{ font-size:13.5px; color:{INK}; line-height:1.7; }}
+:is(.card, .st-key-signal_chips) .dg-l {{ display:grid; grid-template-columns:11em 1fr; gap:0 10px; align-items:baseline; margin-top:6px; padding-left:14px; }}
+@media (max-width: 640px) {{ :is(.card, .st-key-signal_chips) .dg-l {{ grid-template-columns:1fr; }} }}
+:is(.card, .st-key-signal_chips) .dg-wh {{ font-size:11.5px; color:{SUB}; white-space:nowrap; }}
+:is(.card, .st-key-signal_chips) .dg-l .dg-q b {{ color:{INK}; font-weight:700; background:#FFF6E3; }}
+:is(.card, .st-key-signal_chips) .dg-l .uc {{ font-size:10.5px; color:#8A5A12; border:1px dashed #9A6410; border-radius:6px; padding:0 6px; margin-left:6px; white-space:nowrap; }}
+:is(.card, .st-key-signal_chips) .dg-q .uc {{ font-size:10.5px; color:#8A5A12; border:1px dashed #9A6410; border-radius:6px; padding:0 6px; margin-left:6px; white-space:nowrap; }}
+:is(.card, .st-key-signal_chips) .dg-old {{ font-size:11px; color:{SUB}; margin-top:3px; }}
 .sec {{ display:flex; flex-wrap:wrap; align-items:center; gap:4px 10px; margin:26px 0 10px; padding-bottom:6px; border-bottom:1px solid {LINE}; }}
 .sec .no {{ background:#2F5D8A; color:#fff; border-radius:999px; min-width:22px; height:22px; display:inline-flex; align-items:center;
             justify-content:center; font-size:12px; font-weight:800; }}
@@ -333,10 +333,9 @@ def _by_latest(tags):
     return sorted(tags, key=lambda t: max(x["date"] for x in t["sources"]), reverse=True)
 
 
-def card_signal_chips(tags, statics, years, key):
-    """どんな予兆が出ているかをひと目で（チップ一覧）。取引先画面の上に常に出す（変更記録 CH-34）。
-    面談メモ由来の予兆は押せるチップ（st.pills）にし、押すと下の「予兆ごとの記録」がその予兆に絞り込まれる（CH-36）。
-    戻り値＝選ばれた予兆の名前のリスト（何も選ばなければ空）"""
+def card_signals_with_records(tags, statics, years, posts, key):
+    """「これまでの記録に出てきた予兆」1 枚：上にチップ（ひと目で把握・押すと絞り込み）、下に予兆ごとの記録（変更記録 CH-34・36・37）
+    面談メモ由来の予兆は押せるチップ（st.pills）。押すとすぐ下の記録がその予兆だけになる"""
     ordered = _by_latest(tags)
     label = {}
     for t in ordered:
@@ -344,7 +343,7 @@ def card_signal_chips(tags, statics, years, key):
         label[t["name"]] = f"● {t['name']}（最後：{ym(last['date'])}{'・未確認' if last.get('unconfirmed') else ''}）"
     with st.container(key="signal_chips"):
         st.markdown(f"<div class='hd'>これまでの記録に出てきた予兆（過去{years}年）</div>"
-                    f"<div class='note'>今も続いているとは限りません。判定ではありません。予兆を押すと、下の「予兆ごとの記録」がその予兆に絞り込まれます</div>",
+                    f"<div class='note'>今も続いているとは限りません。判定ではありません。予兆を押すと、その予兆の記録だけに絞り込めます</div>",
                     unsafe_allow_html=True)
         picked = []
         if ordered:
@@ -355,9 +354,9 @@ def card_signal_chips(tags, statics, years, key):
         if statics:
             st.markdown("<div class='dg-st'>" + "".join(f"<span class='chip' style='background:#EEF0F3;color:#44506A'>◆ {escape(x['text'])}</span>"
                                                      for x in statics) + "</div>", unsafe_allow_html=True)
-        st.markdown("<div class='dg-lg' style='border-bottom:none'>● 面談メモから（最後に記録された時期。押すと絞り込み）　◆ 顧客データから</div>",
+        st.markdown("<div class='dg-lg'>● 面談メモから（最後に記録された時期。押すと絞り込み）　◆ 顧客データから</div>",
                     unsafe_allow_html=True)
-    return picked
+        st.markdown(signal_records_html(tags, posts, picked), unsafe_allow_html=True)
 
 
 def _with_bold(text, ev):
@@ -369,7 +368,7 @@ def _with_bold(text, ev):
     return f"<b>{escape(ev or text)}</b>"
 
 
-def card_signal_records(tags, posts, picked=()):
+def signal_records_html(tags, posts, picked=()):
     """予兆ごとの記録（タブの中）。予兆ごとに、担当者をまたいだ記録を新しい順に「時期・書いた人・該当する一文」で並べる。
     同じ予兆で、林さん（2024年）と佐々木さん（2026年）の記録がつながって見えるようにする（変更記録 CH-35）"""
     text_of = {p["id"]: p["text"] for p in posts}
@@ -390,7 +389,8 @@ def card_signal_records(tags, posts, picked=()):
                    f"{lines}</div>")
     if not blocks:
         blocks = f"<div style='color:{SUB};font-size:13px;padding:6px 0'>これまでの記録に、予兆に関わるものはありません</div>"
-    card("", blocks, "予兆ごとに、担当者をまたいだ記録を新しい順に並べています。太字は、その予兆の根拠になった文です")
+    return (f"<div class='dg-rec'><div class='note' style='margin:8px 0 2px'>予兆ごとに、担当者をまたいだ記録を新しい順に並べています。"
+            f"太字は、その予兆の根拠になった文です</div>{blocks}</div>")
 
 
 def card_company_data(c, v, assignments):
@@ -630,25 +630,21 @@ def page_company():
              "".join(row(f"{x['at'] or ''}　{x['from_name'] or ''}さんから", body=x["theme"]) for x in mine),
              "相談を受けた範囲として、この企業の記録を読めます", accent="#2F5D8A")
 
-    # 常に見える：予兆のチップ一覧 → この訪問でお客さまに確かめること（状態と「次の世代につなぎたいもの」はその上）
-    # タブ：予兆ごとの記録／面談メモ履歴／顧客データ・担当の移り変わり（変更記録 CH-34）
-    picked = card_signal_chips(v["tags"], v["statics"], tsumugu.RULES["gate"]["window_months"] // 12, key=f"sig_pick_{cid}")
-    if v["next_actions"]:
-        card_questions(v["next_actions"]["questions"], "この訪問でお客さまに確かめること",
-                       "社長や社員の方に。AI からの提案です。実際に何を聞くかは担当者が決めます")
+    # 並び（変更記録 CH-37）：予兆（チップで絞り込み ＋ 予兆ごとの記録を 1 枚に）→ ほかの記録（タブ）→ 最後に、この訪問でお客さまに確かめること
+    card_signals_with_records(v["tags"], v["statics"], tsumugu.RULES["gate"]["window_months"] // 12, posts, key=f"sig_pick_{cid}")
 
-    st.markdown(f"<div style='font-size:15px;font-weight:800;color:{INK};margin:14px 0 4px'>記録を読む"
+    st.markdown(f"<div style='font-size:15px;font-weight:800;color:{INK};margin:14px 0 4px'>ほかの記録を読む"
                 f"<span style='font-size:12px;font-weight:500;color:{SUB}'>　ボタンで切り替え</span></div>", unsafe_allow_html=True)
     assignments = db.get_assignments(cid)
-    t1, t2, t3 = st.tabs([f"予兆ごとの記録（{len(picked) if picked else len(v['tags'])}）", f"面談メモ履歴（{len(posts)}）",
-                          "顧客データ・担当の移り変わり"])
+    t1, t2 = st.tabs([f"面談メモ履歴（{len(posts)}）", "顧客データ・担当の移り変わり"])
     with t1:
-        card_signal_records(v["tags"], posts, picked)
-    with t2:
-        # 全件を日付順に読むタブ。予兆に関わる記録は「予兆ごとの記録」タブで読む（絞り込みは重複になるのでやめた。CH-35）
         card_memos(posts, title="", note=f"全 {len(posts)} 件。新しい順。担当交代の区切り入り。担当者が代わっても記録は残ります")
-    with t3:
+    with t2:
         card_company_data(c, v, assignments)
+
+    if v["next_actions"]:
+        card_questions(v["next_actions"]["questions"], "この訪問でお客さまに確かめること",
+                       "社長や社員の方に。記録を読んだうえで、何を聞くか。AI からの提案です。実際に何を聞くかは担当者が決めます")
     st.caption("前任者たちの記録を読むことで、着任初日から担当企業の状況を把握できます（書かなくても得られる価値）。")
 
 
