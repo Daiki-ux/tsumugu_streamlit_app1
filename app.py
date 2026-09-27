@@ -88,6 +88,19 @@ div[data-testid="stVerticalBlock"] > div {{ margin-bottom: 2px; }}
 .st-key-pilot_survey button p {{ font-size:13px; }}
 /* 予兆ごとのまとめ（取引先・訪問前） */
 .card .dg-st {{ display:flex; flex-wrap:wrap; align-items:center; gap:2px 0; padding:2px 0 0; }}
+/* 予兆のチップ（押すと絞り込み）：カードの見た目に揃える */
+.st-key-signal_chips {{ border:1px solid {LINE}; border-radius:12px; padding:16px 18px 10px; margin-bottom:14px; background:#fff; }}
+.st-key-signal_chips .hd {{ font-size:15px; font-weight:800; color:{INK}; margin-bottom:4px; }}
+.st-key-signal_chips .note {{ font-size:11px; color:{SUB}; margin-bottom:6px; }}
+.st-key-signal_chips .dg-st {{ display:flex; flex-wrap:wrap; gap:2px 0; }}
+.st-key-signal_chips .dg-lg {{ font-size:10.5px; color:{SUB}; padding:2px 0; }}
+.st-key-signal_chips [data-testid="stButtonGroup"] button {{ background:#FCF1DA; border:1px solid #F0DDB5; border-radius:999px; cursor:pointer; }}
+.st-key-signal_chips [data-testid="stButtonGroup"] button p {{ color:#8A5A12; font-weight:700; font-size:13px; }}
+.st-key-signal_chips [data-testid="stButtonGroup"] button:hover {{ background:#F8E6BF; }}
+.st-key-signal_chips [data-testid="stButtonGroup"] button[aria-pressed="true"] {{ background:#9A6410 !important; border-color:#9A6410 !important; }}
+.st-key-signal_chips [data-testid="stButtonGroup"] button[aria-pressed="true"] p {{ color:#fff !important; }}
+.card .dg-flt {{ font-size:12px; font-weight:700; color:#8A5A12; background:#FFF6E3; border-radius:8px; padding:6px 10px; margin-bottom:4px; }}
+.card .dg-flt span {{ font-weight:500; color:{SUB}; }}
 .card .dg-lg {{ font-size:10.5px; color:{SUB}; padding:4px 0 6px; border-bottom:1px solid #F1F2F4; }}
 .card .dg {{ padding:10px 0; border-top:1px solid #F1F2F4; }}
 .card .dg-lg + .dg {{ border-top:none; }}
@@ -320,20 +333,31 @@ def _by_latest(tags):
     return sorted(tags, key=lambda t: max(x["date"] for x in t["sources"]), reverse=True)
 
 
-def card_signal_chips(tags, statics, years):
-    """どんな予兆が出ているかをひと目で（チップ一覧）。取引先画面の上に常に出す（変更記録 CH-34）"""
-    chips = ""
-    for t in _by_latest(tags):
+def card_signal_chips(tags, statics, years, key):
+    """どんな予兆が出ているかをひと目で（チップ一覧）。取引先画面の上に常に出す（変更記録 CH-34）。
+    面談メモ由来の予兆は押せるチップ（st.pills）にし、押すと下の「予兆ごとの記録」がその予兆に絞り込まれる（CH-36）。
+    戻り値＝選ばれた予兆の名前のリスト（何も選ばなければ空）"""
+    ordered = _by_latest(tags)
+    label = {}
+    for t in ordered:
         last = max(t["sources"], key=lambda x: x["date"])
-        when = ym(last["date"]) + ("・未確認" if last.get("unconfirmed") else "")
-        chips += (f"<span class='chip' style='background:#FCF1DA;color:#8A5A12'>● {escape(t['name'])}"
-                  f"<span style='font-weight:500;font-size:11.5px'>（最後：{escape(when)}）</span></span>")
-    chips += "".join(f"<span class='chip' style='background:#EEF0F3;color:#44506A'>◆ {escape(x['text'])}</span>" for x in statics)
-    body = (f"<div class='dg-st'>{chips}</div><div class='dg-lg' style='border-bottom:none'>● 面談メモから（最後に記録された時期）　◆ 顧客データから</div>"
-            if chips else f"<div style='color:{SUB};font-size:13px'>これまでの記録に、予兆に関わるものはありません</div>")
-    st.markdown(f"<div class='card'><div class='hd'>これまでの記録に出てきた予兆（過去{years}年）</div>"
-                f"<div class='note'>今も続いているとは限りません。判定ではありません。中身は下の「予兆ごとの記録」で読めます</div>"
-                f"{body}</div>", unsafe_allow_html=True)
+        label[t["name"]] = f"● {t['name']}（最後：{ym(last['date'])}{'・未確認' if last.get('unconfirmed') else ''}）"
+    with st.container(key="signal_chips"):
+        st.markdown(f"<div class='hd'>これまでの記録に出てきた予兆（過去{years}年）</div>"
+                    f"<div class='note'>今も続いているとは限りません。判定ではありません。予兆を押すと、下の「予兆ごとの記録」がその予兆に絞り込まれます</div>",
+                    unsafe_allow_html=True)
+        picked = []
+        if ordered:
+            picked = st.pills("予兆で絞り込む", [t["name"] for t in ordered], selection_mode="multi", key=key,
+                              format_func=lambda n: label[n], label_visibility="collapsed") or []
+        else:
+            st.markdown(f"<div style='color:{SUB};font-size:13px'>これまでの記録に、予兆に関わるものはありません</div>", unsafe_allow_html=True)
+        if statics:
+            st.markdown("<div class='dg-st'>" + "".join(f"<span class='chip' style='background:#EEF0F3;color:#44506A'>◆ {escape(x['text'])}</span>"
+                                                     for x in statics) + "</div>", unsafe_allow_html=True)
+        st.markdown("<div class='dg-lg' style='border-bottom:none'>● 面談メモから（最後に記録された時期。押すと絞り込み）　◆ 顧客データから</div>",
+                    unsafe_allow_html=True)
+    return picked
 
 
 def _with_bold(text, ev):
@@ -345,12 +369,16 @@ def _with_bold(text, ev):
     return f"<b>{escape(ev or text)}</b>"
 
 
-def card_signal_records(tags, posts):
+def card_signal_records(tags, posts, picked=()):
     """予兆ごとの記録（タブの中）。予兆ごとに、担当者をまたいだ記録を新しい順に「時期・書いた人・該当する一文」で並べる。
     同じ予兆で、林さん（2024年）と佐々木さん（2026年）の記録がつながって見えるようにする（変更記録 CH-35）"""
     text_of = {p["id"]: p["text"] for p in posts}
+    shown = [t for t in _by_latest(tags) if not picked or t["name"] in picked]
     blocks = ""
-    for t in _by_latest(tags):
+    if picked:
+        blocks += (f"<div class='dg-flt'>絞り込み中：{escape('・'.join(picked))}（{len(shown)} / {len(tags)} 件）"
+                   f"<span>　上の予兆をもう一度押すと解除</span></div>")
+    for t in shown:
         src = sorted(t["sources"], key=lambda x: x["date"], reverse=True)
         authors = len({x["author"] for x in src})
         lines = "".join(
@@ -604,7 +632,7 @@ def page_company():
 
     # 常に見える：予兆のチップ一覧 → この訪問でお客さまに確かめること（状態と「次の世代につなぎたいもの」はその上）
     # タブ：予兆ごとの記録／面談メモ履歴／顧客データ・担当の移り変わり（変更記録 CH-34）
-    card_signal_chips(v["tags"], v["statics"], tsumugu.RULES["gate"]["window_months"] // 12)
+    picked = card_signal_chips(v["tags"], v["statics"], tsumugu.RULES["gate"]["window_months"] // 12, key=f"sig_pick_{cid}")
     if v["next_actions"]:
         card_questions(v["next_actions"]["questions"], "この訪問でお客さまに確かめること",
                        "社長や社員の方に。AI からの提案です。実際に何を聞くかは担当者が決めます")
@@ -612,10 +640,10 @@ def page_company():
     st.markdown(f"<div style='font-size:15px;font-weight:800;color:{INK};margin:14px 0 4px'>記録を読む"
                 f"<span style='font-size:12px;font-weight:500;color:{SUB}'>　ボタンで切り替え</span></div>", unsafe_allow_html=True)
     assignments = db.get_assignments(cid)
-    t1, t2, t3 = st.tabs([f"予兆ごとの記録（{len(v['tags'])}）", f"面談メモ履歴（{len(posts)}）",
+    t1, t2, t3 = st.tabs([f"予兆ごとの記録（{len(picked) if picked else len(v['tags'])}）", f"面談メモ履歴（{len(posts)}）",
                           "顧客データ・担当の移り変わり"])
     with t1:
-        card_signal_records(v["tags"], posts)
+        card_signal_records(v["tags"], posts, picked)
     with t2:
         # 全件を日付順に読むタブ。予兆に関わる記録は「予兆ごとの記録」タブで読む（絞り込みは重複になるのでやめた。CH-35）
         card_memos(posts, title="", note=f"全 {len(posts)} 件。新しい順。担当交代の区切り入り。担当者が代わっても記録は残ります")
