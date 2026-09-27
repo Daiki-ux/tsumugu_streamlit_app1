@@ -18,6 +18,8 @@
 #     4. 点数・危険度・ランキングは出さない（企画書 v4 §7.2・§7.3）。バッジは「点数」ではなく「今どの状態か」
 #   処理は tsumugu.run() / tsumugu.company_state() に任せ、ここは「結果の dict を並べる」だけ。
 # =============================================================
+import importlib
+import os
 import re
 from datetime import date
 from html import escape
@@ -25,7 +27,25 @@ from html import escape
 import streamlit as st
 
 import database as db
+import ranking
 import tsumugu
+
+
+def _reload_if_updated(*modules):
+    """処理のファイル（database.py・ranking.py・tsumugu.py）が更新されていたら読み込み直す。
+    Streamlit（特に Streamlit Cloud）は app.py だけを新しくして、import したファイルは古いまま動き続けることがあり、
+    マージ後に「関数が無い」（AttributeError）になるため（変更記録 CH-45）。依存の順（database → ranking → tsumugu）に読み直す"""
+    changed = False
+    for m in modules:
+        mtime = os.path.getmtime(m.__file__)
+        # まだ記録が無い（古い app.py が読み込んだまま）か、ファイルが新しくなっていたら読み直す
+        if changed or getattr(m, "_loaded_mtime", None) != mtime:
+            importlib.reload(m)
+            changed = True                     # 下の段が上の段を import しているので、1 つ読み直したら後ろも読み直す
+        m._loaded_mtime = mtime
+
+
+_reload_if_updated(db, ranking, tsumugu)
 
 st.set_page_config(page_title="ツムグ｜SFA の中の表示領域", page_icon="🧵", layout="wide")
 db.init_db()
