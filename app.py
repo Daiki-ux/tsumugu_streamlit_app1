@@ -86,6 +86,59 @@ div[data-testid="stVerticalBlock"] > div {{ margin-bottom: 2px; }}
 .st-key-pilot_survey .sv-q {{ font-size:15px; font-weight:800; color:{INK}; }}
 .st-key-pilot_survey .sv-nt {{ font-size:11.5px; color:{SUB}; margin:4px 0 8px; }}
 .st-key-pilot_survey button p {{ font-size:13px; }}
+/* 予兆ごとのまとめ（取引先・訪問前） */
+:is(.card, .st-key-signal_chips) .dg-st {{ display:flex; flex-wrap:wrap; align-items:center; gap:2px 0; padding:2px 0 0; }}
+/* 予兆のチップ（押すと絞り込み）：カードの見た目に揃える */
+.st-key-signal_chips {{ border:1px solid {LINE}; border-radius:12px; padding:16px 18px 10px; margin-bottom:14px; background:#fff; }}
+.st-key-signal_chips .hd {{ font-size:15px; font-weight:800; color:{INK}; margin-bottom:4px; }}
+.st-key-signal_chips .note {{ font-size:11px; color:{SUB}; margin-bottom:6px; }}
+.st-key-signal_chips .dg-st {{ display:flex; flex-wrap:wrap; gap:2px 0; }}
+.st-key-signal_chips .dg-lg {{ font-size:10.5px; color:{SUB}; padding:2px 0 8px; border-bottom:1px solid #F1F2F4; }}
+.st-key-signal_chips [data-testid="stButtonGroup"] button {{ background:#FCF1DA; border:1px solid #F0DDB5; border-radius:999px; cursor:pointer; }}
+.st-key-signal_chips [data-testid="stButtonGroup"] button p {{ color:#8A5A12; font-weight:700; font-size:13px; }}
+.st-key-signal_chips [data-testid="stButtonGroup"] button:hover {{ background:#F8E6BF; }}
+.st-key-signal_chips [data-testid="stButtonGroup"] button[aria-pressed="true"] {{ background:#9A6410 !important; border-color:#9A6410 !important; }}
+.st-key-signal_chips [data-testid="stButtonGroup"] button[aria-pressed="true"] p {{ color:#fff !important; }}
+:is(.card, .st-key-signal_chips) .dg-flt {{ font-size:12px; font-weight:700; color:#8A5A12; background:#FFF6E3; border-radius:8px; padding:6px 10px; margin-bottom:4px; }}
+:is(.card, .st-key-signal_chips) .dg-flt span {{ font-weight:500; color:{SUB}; }}
+:is(.card, .st-key-signal_chips) .dg-lg {{ font-size:10.5px; color:{SUB}; padding:4px 0 6px; border-bottom:1px solid #F1F2F4; }}
+:is(.card, .st-key-signal_chips) .dg {{ padding:10px 0; border-top:1px solid #F1F2F4; }}
+.dg-rec .note + .dg, .dg-rec .dg-flt + .dg {{ border-top:none; }}
+.dg-rec .dg-l.dg {{ padding:10px 0; margin-top:0; }}
+:is(.card, .st-key-signal_chips) .dg-h {{ display:flex; flex-wrap:wrap; align-items:baseline; gap:2px 10px; }}
+:is(.card, .st-key-signal_chips) .dg-n {{ font-size:14.5px; font-weight:800; color:#8A5A12; }}
+:is(.card, .st-key-signal_chips) .dg-w {{ font-size:11.5px; color:{SUB}; }}
+:is(.card, .st-key-signal_chips) .dg-q {{ font-size:13.5px; color:{INK}; line-height:1.7; }}
+:is(.card, .st-key-signal_chips) .dg-l {{ display:grid; grid-template-columns:11em 1fr; gap:0 10px; align-items:baseline; margin-top:6px; padding-left:14px; }}
+@media (max-width: 640px) {{ :is(.card, .st-key-signal_chips) .dg-l {{ grid-template-columns:1fr; }} }}
+:is(.card, .st-key-signal_chips) .dg-wh {{ font-size:11.5px; color:{SUB}; white-space:nowrap; }}
+:is(.card, .st-key-signal_chips) .dg-l .dg-q b {{ color:{INK}; font-weight:700; background:#FFF6E3; }}
+:is(.card, .st-key-signal_chips) .dg-l .uc {{ font-size:10.5px; color:#8A5A12; border:1px dashed #9A6410; border-radius:6px; padding:0 6px; margin-left:6px; white-space:nowrap; }}
+:is(.card, .st-key-signal_chips) .dg-q .uc {{ font-size:10.5px; color:#8A5A12; border:1px dashed #9A6410; border-radius:6px; padding:0 6px; margin-left:6px; white-space:nowrap; }}
+:is(.card, .st-key-signal_chips) .dg-old {{ font-size:11px; color:{SUB}; margin-top:3px; }}
+/* AI が考えたヒント：記録（白いカード）と分ける */
+.hint {{ background:#EEF1FB; border:1px solid #D5DCF3; border-radius:12px; padding:14px 18px 12px; margin-bottom:14px; }}
+.hint-h {{ display:flex; flex-wrap:wrap; align-items:center; gap:4px 10px; }}
+.hint-t {{ font-size:15px; font-weight:800; color:#2B3A78; }}
+.hint-tag {{ font-size:11px; font-weight:700; color:#fff; background:#5363B8; border-radius:999px; padding:2px 10px; }}
+.hint-n {{ font-size:11px; color:#56608C; margin:4px 0 10px; }}
+.hq {{ display:flex; gap:8px; align-items:flex-start; background:#fff; border:1px solid #DDE3F6; border-radius:4px 14px 14px 14px;
+       padding:8px 12px; margin:0 0 8px; font-size:14px; color:{INK}; line-height:1.6; }}
+.hq-i {{ flex:0 0 auto; }}
+/* 面談メモ履歴：1 件 1 行、押すと全文 */
+details.ml {{ border-top:1px solid #F1F2F4; }}
+details.ml:first-of-type {{ border-top:none; }}
+details.ml summary {{ list-style:none; cursor:pointer; display:flex; flex-wrap:wrap; align-items:center; gap:2px 10px; padding:8px 4px; }}
+details.ml summary::-webkit-details-marker {{ display:none; }}
+details.ml summary:hover {{ background:#F7F8FA; }}
+details.ml summary::before {{ content:"▸"; color:{SUB}; font-size:11px; }}
+details.ml[open] summary::before {{ content:"▾"; }}
+.ml-d {{ font-size:12.5px; font-weight:700; color:{INK}; white-space:nowrap; }}
+.ml-a {{ font-size:12px; color:{SUB}; white-space:nowrap; }}
+.ml-t {{ font-size:13.5px; color:{INK}; flex:1 1 200px; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }}
+details.ml[open] .ml-t {{ visibility:hidden; }}
+.ml-b {{ font-size:14px; color:{INK}; line-height:1.7; padding:2px 8px 10px 22px; }}
+.ml-b .sub {{ font-size:11.5px; color:{SUB}; margin-top:4px; }}
 .sec {{ display:flex; flex-wrap:wrap; align-items:center; gap:4px 10px; margin:26px 0 10px; padding-bottom:6px; border-bottom:1px solid {LINE}; }}
 .sec .no {{ background:#2F5D8A; color:#fff; border-radius:999px; min-width:22px; height:22px; display:inline-flex; align-items:center;
             justify-content:center; font-size:12px; font-weight:800; }}
@@ -210,20 +263,6 @@ def srcs(sources):
                    f"{escape(ym(x['date']))}・{escape(x['author'])}　未確認（雑談などで聞いた話）</span>" for x in sources)
 
 
-def chips_html(tags, statics):
-    """担当者向けの予兆チップ。候補タグや「重なりに数える／数えない」など判定の仕組みの言葉は出さない（運営側の話。変更記録 CH-25）
-    面談メモ由来の予兆には「最後に記録された時期」を添える。今も続いているかは担当者が確かめる（変更記録 CH-28）"""
-    out = []
-    for t in sorted(tags, key=lambda t: max(x["date"] for x in t["sources"]), reverse=True):
-        last = max(t["sources"], key=lambda x: x["date"])
-        when = ym(last["date"]) + ("・未確認" if last.get("unconfirmed") else "")
-        out.append(f"<span class='chip' style='background:#FCF1DA;color:#8A5A12'>● {escape(t['name'])}"
-                   f"<span style='font-weight:500;font-size:11.5px'>（最後：{escape(when)}）</span></span>")
-    for x in statics:
-        out.append(f"<span class='chip' style='background:#EEF0F3;color:#44506A'>◆ {escape(x['text'])}</span>")
-    return "".join(out) or f"<span style='color:{SUB};font-size:13px'>まだ予兆タグは付いていません</span>"
-
-
 def card_signals(sig):
     """重なった予兆（出典つき）。1 予兆＝1 行"""
     rows = "".join(row(s["name"], chips_html=srcs(s["sources"])) for s in sig["tags"])
@@ -262,11 +301,15 @@ def legacy_band(items, note="この企業が地域で担っていること。承
                 f"<span class='n'>{escape(note)}</span></div><div class='grid'>{cells}</div>{foot}</div>", unsafe_allow_html=True)
 
 
-def card_questions(questions, title="次回訪問で確認するとよいこと", note="AI からの提案です。実際に何を聞くかは担当者が決めます"):
+def card_questions(questions, title="お客さまとの会話のヒント",
+                   note="機会があれば、社長や社員の方に。記録から AI が考えた例です。聞くかどうか、何を聞くかは担当者が決めます"):
+    """AI が考えた会話のヒント。記録（白いカード）とは見た目を分ける：藍色の背景・「AI のヒント」の札・吹き出し（変更記録 CH-40）"""
     if not questions:
         return
-    items = "".join(f"<li>{escape(q)}</li>" for q in questions)
-    card(title, f"<ol>{items}</ol>", note)
+    items = "".join(f"<div class='hq'><span class='hq-i'>💬</span><span>{escape(q)}</span></div>" for q in questions)
+    st.markdown(f"<div class='hint'><div class='hint-h'><span class='hint-t'>{escape(title)}</span>"
+                f"<span class='hint-tag'>✨ AI のヒント</span></div><div class='hint-n'>{escape(note)}</div>{items}</div>",
+                unsafe_allow_html=True)
 
 
 PUBLIC_KIND = {"option": "公的な支援制度", "knowhow": "手引き・Q&A", "law": "法律・税制"}
@@ -314,7 +357,134 @@ def card_public(refs, title="関連する公的な支援制度・法令"):
          "公的機関のページです（crawler.py で収集）。お客さまへの案内や、制度を確かめるときの参考に")
 
 
-def card_memos(posts):
+def _by_latest(tags):
+    return sorted(tags, key=lambda t: max(x["date"] for x in t["sources"]), reverse=True)
+
+
+def card_signals_with_records(tags, statics, years, posts, key):
+    """「これまでの記録に出てきた予兆」1 枚：上にチップ（ひと目で把握・押すと絞り込み）、下に予兆ごとの記録（変更記録 CH-34・36・37）
+    面談メモ由来の予兆は押せるチップ（st.pills）。押すとすぐ下の記録がその予兆だけになる"""
+    ordered = _by_latest(tags)
+    label = {t["name"]: f"● {t['name']}" for t in ordered}     # 時期は下の記録で見られるので、チップは名前だけ（CH-38）
+    with st.container(key="signal_chips"):
+        st.markdown(f"<div class='hd'>これまでの記録に出てきた予兆（過去{years}年）</div>"
+                    f"<div class='note'>今も続いているとは限りません。判定ではありません。予兆を押すと、その予兆の記録だけに絞り込めます</div>",
+                    unsafe_allow_html=True)
+        picked = []
+        if ordered:
+            picked = st.pills("予兆で絞り込む", [t["name"] for t in ordered], selection_mode="multi", key=key,
+                              format_func=lambda n: label[n], label_visibility="collapsed") or []
+        else:
+            st.markdown(f"<div style='color:{SUB};font-size:13px'>これまでの記録に、予兆に関わるものはありません</div>", unsafe_allow_html=True)
+        if statics:
+            st.markdown("<div class='dg-st'>" + "".join(f"<span class='chip' style='background:#EEF0F3;color:#44506A'>◆ {escape(x['text'])}</span>"
+                                                     for x in statics) + "</div>", unsafe_allow_html=True)
+        st.markdown("<div class='dg-lg'>● 面談メモから（押すと絞り込み）　◆ 顧客データから</div>",
+                    unsafe_allow_html=True)
+        st.markdown(signal_records_html(tags, posts, picked), unsafe_allow_html=True)
+
+
+def _with_bold(text, evs):
+    """記録の本文を出し、予兆の根拠になった文を太字にする（一文だけだと前後の文脈が分からないため）。evs は根拠の文のリスト"""
+    out = escape(text or "")
+    for ev in dict.fromkeys(e for e in evs if e):
+        e = escape(ev)
+        out = out.replace(e, f"<b>{e}</b>", 1) if e in out else out
+    return out or "".join(f"<b>{escape(e)}</b>" for e in evs if e)
+
+
+def signal_records_html(tags, posts, picked=()):
+    """予兆に関わる記録を 1 件ずつ新しい順に（同じ記録は 1 回だけ）。各記録に、その記録から拾った予兆のチップを付ける。
+    チップで絞り込むと、選んだ予兆を含む記録だけ残る（予兆ごとの見出しで区切るのはやめた。変更記録 CH-41）"""
+    text_of = {p["id"]: p["text"] for p in posts}
+    recs = {}
+    for t in tags:
+        for x in t["sources"]:
+            r = recs.setdefault(x["post_id"], {"date": x["date"], "author": x["author"], "tags": [], "ev": [], "unc": False})
+            r["tags"].append(t["name"])
+            r["ev"].append(x["evidence"])
+            r["unc"] = r["unc"] or bool(x.get("unconfirmed"))
+    rows = sorted(recs.items(), key=lambda kv: kv[1]["date"], reverse=True)
+    shown = [(pid, r) for pid, r in rows if not picked or set(picked) & set(r["tags"])]
+    html = ""
+    if picked:
+        html += (f"<div class='dg-flt'>絞り込み中：{escape('・'.join(picked))}（記録 {len(shown)} / {len(rows)} 件）"
+                 f"<span>　上の予兆をもう一度押すと解除</span></div>")
+    for pid, r in shown:
+        chips = "".join(
+            f"<span class='chip s' style='background:{'#9A6410' if n in picked else '#FCF1DA'};color:{'#fff' if n in picked else '#8A5A12'}'>● {escape(n)}</span>"
+            for n in r["tags"])
+        unc = "<span class='uc'>未確認（雑談などで聞いた話）</span>" if r["unc"] else ""
+        html += (f"<div class='dg-l dg'><span class='dg-wh'>{escape(ym(r['date']))}・{escape(r['author'])}</span>"
+                 f"<div><div class='dg-q'>{_with_bold(text_of.get(pid, ''), r['ev'])}{unc}</div><div>{chips}</div></div></div>")
+    if not rows:
+        html = f"<div style='color:{SUB};font-size:13px;padding:6px 0'>これまでの記録に、予兆に関わるものはありません</div>"
+    return (f"<div class='dg-rec'><div class='note' style='margin:8px 0 2px'>予兆に関わる記録を新しい順に並べています。"
+            f"太字は予兆の根拠になった文、下のチップはその記録から拾った予兆です</div>{html}</div>")
+
+
+def _next_day(d):
+    from datetime import timedelta
+    return (date.fromisoformat(d) + timedelta(days=1)).isoformat()
+
+
+def assignment_periods(assignments):
+    """担当の移り変わりを期間に分ける（主担当・副担当が重なる企業もあるので、担当が変わるたびに区切る）
+    → [{start, end(None=現在), staff[{name, dept}]}]（古い順）"""
+    cuts = sorted({a["from_date"] for a in assignments} | {_next_day(a["to_date"]) for a in assignments if a["to_date"]})
+    periods = []
+    for i, start in enumerate(cuts):
+        end = cuts[i + 1] if i + 1 < len(cuts) else None
+        staff = [a for a in assignments if a["from_date"] <= start and (not a["to_date"] or a["to_date"] >= start)]
+        if staff:
+            periods.append({"start": start, "end": end, "staff": [{"name": a["staff_name"], "dept": a["dept"]} for a in staff]})
+    return periods
+
+
+def memo_line(p):
+    """面談メモ 1 件 1 行：日付・書いた人・本文の先頭・予兆のチップ。押すと全文（HTML の details）"""
+    tg = "".join(f"<span class='chip s' style='background:#FCF1DA;color:#8A5A12'>{escape(tsumugu.tag_name(t['tag_id']))}</span>"
+                 for t in p["tags"] if t["tier"] == "formal")
+    if any(t["tier"] == "formal" and t.get("origin") == "hearsay" for t in p["tags"]):
+        tg += "<span class='chip s' style='background:#fff;border:1px dashed #9A6410;color:#8A5A12'>未確認の話を含む</span>"
+    src = "過去日報（取り込み）" if "過去" in (p["source_label"] or "") else "SFA 日報"
+    act = f"{p['activity']}｜" if p.get("activity") else ""
+    return (f"<details class='ml'><summary><span class='ml-d'>{escape(p['posted_at'])}</span>"
+            f"<span class='ml-a'>{escape(p['author_name'] or '')}</span><span class='ml-t'>{escape(p['text'])}</span>{tg}</summary>"
+            f"<div class='ml-b'>{escape(p['text'])}<div class='sub'>{escape(act + src)}</div></div></details>")
+
+
+def memo_history(posts, assignments, key):
+    """面談メモ履歴（タブの中）。担当期間ごとに折りたたみ（今の担当だけ開く）、中は 1 件 1 行・押すと全文（変更記録 CH-42）。
+    見出しが担当の移り変わりを兼ねる"""
+    periods = assignment_periods(assignments)
+    groups = []
+    for pr in reversed(periods):
+        ps = [p for p in posts if p["posted_at"] >= pr["start"] and (pr["end"] is None or p["posted_at"] < pr["end"])]
+        groups.append((pr, ps))
+    first = periods[0]["start"] if periods else None
+    before = [p for p in posts if first and p["posted_at"] < first] if periods else list(posts)
+    st.markdown(f"<div class='note' style='font-size:11px;color:{SUB};margin:2px 0 8px'>全 {len(posts)} 件。担当の移り変わりごとにまとめています。"
+                f"行を押すと全文を開きます。担当者が代わっても記録は残ります</div>", unsafe_allow_html=True)
+    for i, (pr, ps) in enumerate(groups):
+        who = "・".join(f"{x['name']}（{x['dept']}）" for x in pr["staff"])
+        span = f"{pr['start'][:7]} 〜 {'現在' if pr['end'] is None else _prev_month(pr['end'])}"
+        label = f"{who}　{span}　記録 {len(ps)} 件" + ("　（現在の担当）" if pr["end"] is None else "")
+        with st.expander(label, expanded=(i == 0)):
+            st.markdown("".join(memo_line(p) for p in reversed(ps)) or f"<div class='sub'>この期間の記録はありません</div>",
+                        unsafe_allow_html=True)
+    if before:
+        with st.expander(f"担当の記録がない期間（〜{first[:7] if first else ''}）　記録 {len(before)} 件"):
+            st.markdown("".join(memo_line(p) for p in reversed(before)), unsafe_allow_html=True)
+
+
+def _prev_month(d):
+    """期間の終わり（次の期間の初日）→ その前日の年月"""
+    from datetime import timedelta
+    return (date.fromisoformat(d) - timedelta(days=1)).isoformat()[:7]
+
+
+def card_memos(posts, title="面談メモ履歴", note="新しい順。担当者が代わっても記録は残ります"):
     rows, last_author = "", None
     for p in reversed(posts):
         if last_author and p["author_name"] != last_author:
@@ -328,7 +498,7 @@ def card_memos(posts):
             tg += "<span class='chip s' style='background:#fff;border:1px dashed #9A6410;color:#8A5A12'>未確認の話を含む</span>"
         act = f"{p['activity']}｜" if p.get("activity") else ""
         rows += row(f"{p['posted_at']}　{p['author_name']}", body=p["text"], sub=act + src, chips_html=tg)
-    card("面談メモ履歴", rows, "新しい順。担当者が代わっても記録は残ります")
+    card(title, rows, note)
 
 
 def people_block(people, company, me):
@@ -527,25 +697,17 @@ def page_company():
              "".join(row(f"{x['at'] or ''}　{x['from_name'] or ''}さんから", body=x["theme"]) for x in mine),
              "相談を受けた範囲として、この企業の記録を読めます", accent="#2F5D8A")
 
-    c1, c2 = st.columns([1.1, 1], gap="medium")
-    with c1:
-        years = tsumugu.RULES["gate"]["window_months"] // 12
-        st.markdown(f"<div class='card'><div class='hd'>これまでの記録に出てきた予兆（過去{years}年）</div>"
-                    f"<div class='note'>● 面談メモから（最後に記録された時期）　◆ 顧客データから。"
-                    f"今も続いているとは限りません。判定ではありません</div>"
-                    f"{chips_html(v['tags'], v['statics'])}</div>", unsafe_allow_html=True)
-        summary = tsumugu.pre_visit_summary(cid, as_of=TODAY.isoformat(), limit=4)
-        if summary:
-            card("訪問前のまとめ（これまでの記録から）",
-                 "".join(row(s["name"], body=s["text"], chips_html=srcs([{"date": s["date"], "author": s["author"] or "", "unconfirmed": s["unconfirmed"]}]))
-                         for s in summary),
-                 "予兆に関わる記録を新しい順に。どれも元の記録をそのまま引いています")
-        if v["next_actions"]:
-            card_questions(v["next_actions"]["questions"], "この訪問でお客さまに確かめること",
-                           "社長や社員の方に。AI からの提案です。実際に何を聞くかは担当者が決めます")
-    with c2:
-        with st.container(height=640, border=False):
-            card_memos(posts)
+    # 並び（変更記録 CH-37・CH-39）：予兆（チップで絞り込み ＋ 予兆ごとの記録を 1 枚に）→ お客さまとの会話のヒント → ほかの記録（タブ）
+    card_signals_with_records(v["tags"], v["statics"], tsumugu.RULES["gate"]["window_months"] // 12, posts, key=f"sig_pick_{cid}")
+    if v["next_actions"]:
+        card_questions(v["next_actions"]["questions"])
+
+    # 面談メモ履歴（担当期間ごとに折りたたみ）。顧客データは SFA の領域（上のヘッダー）と「次の世代につなぎたいもの」に
+    # 出ているので、ツムグ側では並べ直さない（顧客データのタブはやめた。変更記録 CH-43）
+    st.markdown(f"<div style='font-size:15px;font-weight:800;color:{INK};margin:14px 0 2px'>面談メモ履歴（{len(posts)} 件）</div>",
+                unsafe_allow_html=True)
+    memo_history(posts, db.get_assignments(cid), key=cid)
+
     st.caption("前任者たちの記録を読むことで、着任初日から担当企業の状況を把握できます（書かなくても得られる価値）。")
 
 
@@ -593,11 +755,10 @@ def show_reaction(r):
         with c2:
             card_signals(sig)
 
-        section(next(no), "次にすること", "お客さまに確かめること と、行内での準備（どちらも AI の提案。決めるのは担当者）")
+        section(next(no), "次にすること", "お客さまとの会話のヒント と、行内での準備（どちらも AI の提案。決めるのは担当者）")
         c1, c2 = st.columns(2, gap="medium")
         with c1:
-            card_questions(r["next_actions"]["questions"], "お客さまに確かめること",
-                           "次の訪問で、社長や社員の方に。実際に何を聞くかは担当者が決めます")
+            card_questions(r["next_actions"]["questions"])
         with c2:
             if r["next_actions"]["actions"]:
                 card("行内での準備", "".join(row("・" + a) for a in r["next_actions"]["actions"]),
