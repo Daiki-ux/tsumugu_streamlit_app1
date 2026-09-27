@@ -2,7 +2,7 @@
 # tsumugu.py — 処理（反応層 ①〜⑦）。W4 の ranking.py / search.py と同じ「画面を知らない処理」のファイル
 #
 #   ① new_post      SFA の日報 1 件（業務報告）の dict を作る。ツムグの新しい入力欄は無い
-#   ①' draft_from_voice_memo  音声メモから日報の下書き（補助。v4 §4.1。テンプレ → 任意で LLM）
+#   ①' transcribe / tidy_report  🎤 音声の文字起こし・✨ 業務報告を整える（補助。LLM が無ければ模擬）
 #   ② extract       記録 → タグ（正式 8 語 / 候補 / 価値。原文引用付き）  辞書 → （任意）LLM
 #   ③ collate       同一企業の過去の記録 + 静的要因 + 担当履歴 → 企業の輪郭     SQL + pandas（担当者をまたぐ集計）
 #   ④ assess        発火ゲート（if 文）→ 発火時のみ理由文。反応の層 1〜4 を決める（v4 §9.3）
@@ -129,21 +129,51 @@ def is_unconfirmed(sentence):
     return bool(UNCONFIRMED.search(sentence or ""))
 
 
-def draft_from_voice_memo(post, memo, use_llm=True):
-    """①' 訪問後の音声メモ（文字起こし）→ 業務報告の叩き台 {"report", "generated_by"}。
-    補助機能。担当者が確認・修正してから登録する前提（AI が書いた日報がそのまま SFA に入ることはない。v4 §9.6）"""
-    c = db.get_company(post["company_id"]) or {}
-    contact = next((k for k in db.get_contacts(post["company_id"]) if k["id"] == post.get("contact_id")), None)
-    who = f"{contact['name']}（{contact['role']}）" if contact else "先方"
+VOICE_SIM = json.loads((BASE_DIR / "docs" / "voice_samples.json").read_text(encoding="utf-8")) \
+    if (BASE_DIR / "docs" / "voice_samples.json").exists() else {}
+TRANSCRIBE_MODEL = "gpt-4o-mini-transcribe"
+FILLERS = re.compile(r"(?:(?<=^)|(?<=[。、]))(?:えーっと|えーと|えー|あのー|あの|まあ|なんか|で)[、,]")
+
+
+def transcribe(audio_bytes, company_id, use_llm=True):
+    """①' 🎤 音声 → 文字起こし {"text", "by"}。キーがあれば OpenAI で文字起こし、無ければ docs/voice_samples.json の模擬。
+    どちらも無ければ None（変更記録 CH-44）"""
+    if use_llm and llm_available() and audio_bytes:
+        try:
+            import io
+            from openai import OpenAI
+            f = io.BytesIO(audio_bytes)
+            f.name = "voice.wav"
+            res = OpenAI(api_key=llm_key()).audio.transcriptions.create(model=TRANSCRIBE_MODEL, file=f, language="ja")
+            if (res.text or "").strip():
+                return {"text": res.text.strip(), "by": "llm"}
+        except Exception:
+            pass
+    sim = VOICE_SIM.get(company_id, {}).get("transcript")
+    return {"text": sim, "by": "llm-sim"} if sim else None
+
+
+def tidy_report(text, company_id=None, use_llm=True):
+    """①' ✨ 業務報告の文を整える {"text", "by"}。言いよどみを除き、報告の文にする。事実は足さない・伝聞は伝聞のまま。
+    キーがあれば LLM、無ければ模擬（デモの文字起こしと同じ文なら用意した整理結果、それ以外は言い回しの置き換え）"""
+    text = (text or "").strip()
+    if not text:
+        return None
     if use_llm and llm_available():
-        text = llm_chat("地方銀行の法人担当者の音声メモを、日報の「業務報告」欄の文章に整える。丁寧語で簡潔に。"
-                        "メモにない事実は書かない。雑談や噂で聞いた話は「雑談の中で〜と伺った」のように伝聞だと分かる形のまま残す。"
-                        "融資条件や企業の評価は書かない。",
-                        f"企業: {c.get('name')}（{c.get('industry')}）\n面談相手: {who}\n訪問日: {post['posted_at']}\nメモ: {memo}")
-        if text:
-            return {"report": text, "generated_by": "llm"}
-    sents = [x.strip() for x in re.split(r"(?<=[。！？!?])", memo or "") if x.strip()]
-    return {"report": "".join(s if s[-1] in "。！？!?" else s + "。" for s in sents), "generated_by": "template"}
+        out = llm_chat("地方銀行の法人担当者の日報の「業務報告」を整える。言いよどみ（えーと・あの 等）を除き、簡潔な報告の文（だ・である調、体言止め可）にする。"
+                       "書かれていない事実は足さない。雑談や噂で聞いた話は「雑談の中で〜と伺った」のように伝聞と分かる形のまま残す。"
+                       "融資条件や企業の評価は書かない。整えた本文だけを出力する。", text)
+        if out:
+            return {"text": out.strip(), "by": "llm"}
+    sim = VOICE_SIM.get(company_id or "", {})
+    if sim.get("transcript") and sim["transcript"] in text:
+        return {"text": text.replace(sim["transcript"], sim["tidy"]), "by": "llm-sim"}
+    t = FILLERS.sub("", text)
+    t = re.sub(r"って(?=(聞|言|話))", "と", t)
+    t = re.sub(r"てる(?=[。、らとのなよ])", "ている", t)
+    t = re.sub(r"\s+", "", t)
+    t = t if t.endswith(("。", "！", "？")) else t + "。"
+    return {"text": t, "by": "rule"}
 
 
 # ── ② 抽出 ─────────────────────────────────────────────────

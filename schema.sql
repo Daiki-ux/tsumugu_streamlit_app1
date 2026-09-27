@@ -174,3 +174,14 @@ CREATE TABLE IF NOT EXISTS audit_logs (
 CREATE INDEX IF NOT EXISTS idx_posts_company ON posts(company_id, posted_at);
 CREATE INDEX IF NOT EXISTS idx_post_tags_post ON post_tags(post_id);
 CREATE INDEX IF NOT EXISTS idx_assign_company ON assignments(company_id);
+
+-- 日報の下書き（取引先 × 担当者ごとに 1 件。SFA に登録すると消える）
+CREATE TABLE IF NOT EXISTS post_drafts (
+    company_id  TEXT NOT NULL,
+    author_id   TEXT NOT NULL,
+    text        TEXT,
+    activity    TEXT,
+    contact_id  TEXT,
+    saved_at    TEXT,
+    PRIMARY KEY (company_id, author_id)
+);
