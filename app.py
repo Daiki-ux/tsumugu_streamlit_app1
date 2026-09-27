@@ -554,19 +554,23 @@ def page_company():
              "".join(row(f"{x['at'] or ''}　{x['from_name'] or ''}さんから", body=x["theme"]) for x in mine),
              "相談を受けた範囲として、この企業の記録を読めます", accent="#2F5D8A")
 
-    c1, c2 = st.columns([1.1, 1], gap="medium")
-    with c1:
-        card_signal_digest(v["tags"], v["statics"], tsumugu.RULES["gate"]["window_months"] // 12)
-        if v["next_actions"]:
-            card_questions(v["next_actions"]["questions"], "この訪問でお客さまに確かめること",
-                           "社長や社員の方に。AI からの提案です。実際に何を聞くかは担当者が決めます")
-    with c2:
-        only = st.segmented_control("面談メモの表示", ["すべて", "予兆に関わる記録だけ"], default="すべて",
-                                    key=f"memo_filter_{cid}", label_visibility="collapsed") == "予兆に関わる記録だけ"
-        shown = [p for p in posts if any(t["tier"] == "formal" for t in p["tags"])] if only else posts
-        with st.container(height=640, border=False):
-            card_memos(shown, note=(f"予兆に関わる記録 {len(shown)} 件（全 {len(posts)} 件）。新しい順" if only
-                                    else "新しい順。担当者が代わっても記録は残ります"))
+    # 1 段組：何が出ているか → 何を聞くか → （必要なら）全部の記録、の順に上から読む（変更記録 CH-33）
+    card_signal_digest(v["tags"], v["statics"], tsumugu.RULES["gate"]["window_months"] // 12)
+    if v["next_actions"]:
+        card_questions(v["next_actions"]["questions"], "この訪問でお客さまに確かめること",
+                       "社長や社員の方に。AI からの提案です。実際に何を聞くかは担当者が決めます")
+
+    # 面談メモ履歴：参照用。最新 5 件だけ出し、「すべて表示」で残りも。予兆に関わる記録だけに絞ることもできる
+    st.markdown(f"<div style='font-size:15px;font-weight:800;color:{INK};margin:10px 0 4px'>面談メモ履歴</div>", unsafe_allow_html=True)
+    f1, f2 = st.columns([3, 1.2], vertical_alignment="center")
+    only = f1.segmented_control("面談メモの表示", ["すべての記録", "予兆に関わる記録だけ"], default="すべての記録",
+                                key=f"memo_filter_{cid}", label_visibility="collapsed") == "予兆に関わる記録だけ"
+    shown = [p for p in posts if any(t["tier"] == "formal" for t in p["tags"])] if only else posts
+    show_all = f2.toggle(f"すべて表示（{len(shown)} 件）", key=f"memo_all_{cid}", disabled=len(shown) <= MEMO_LATEST)
+    part = shown if show_all else shown[-MEMO_LATEST:]
+    scope = f"予兆に関わる記録 {len(shown)} 件（全 {len(posts)} 件）" if only else f"全 {len(posts)} 件"
+    how = "新しい順にすべて" if len(part) == len(shown) else f"新しい順に {len(part)} 件"
+    card_memos(part, title="", note=f"{scope}のうち、{how}。担当者が代わっても記録は残ります")
     st.caption("前任者たちの記録を読むことで、着任初日から担当企業の状況を把握できます（書かなくても得られる価値）。")
 
 
@@ -669,6 +673,7 @@ def show_reaction(r):
                     st.toast(f"記録しました：{label}（ご協力ありがとうございます）")
 
 
+MEMO_LATEST = 5                                  # 取引先画面の面談メモ履歴で、最初に見せる件数
 ACTIVITIES = ["定例訪問", "決算説明", "資金のご相談", "着任・ご挨拶", "支店長同行", "その他"]
 
 
