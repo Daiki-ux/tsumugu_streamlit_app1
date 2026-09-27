@@ -635,9 +635,10 @@ def best_snippet(text, query, width=120):
     return ("…" if best_pos else "") + text[best_pos:best_pos + width] + "…"
 
 
-def retrieve(profile, signal, post_text, top_n=5, public_n=2):
+def retrieve(profile, signal, post_text, top_n_cases=3, public_n=2, knowhow_n=5):
     """⑤ 輪郭 + 判定 → ナレッジ。
-    返す dict のキー: query, items[]（行内。knowledge の行 + score, snippet。kind ごとに最低 1 件）, public[]（公開。url 付き、最大 public_n）"""
+    返す dict のキー: query, items[]（行内。事例・選択肢を上位 top_n_cases 件 ＋ 現場の知恵。knowledge の行 + score, snippet）, public[]（公開。url 付き、最大 public_n）
+    現場の知恵（knowhow）は、今回の予兆と同じ予兆に付いたものを優先して最大 knowhow_n 件まで足す（変更記録 CH-30）"""
     ensure_index()
     cur = next(t for t in profile["timeline"] if t["post_id"] == profile["current_post_id"])
     cur_tags = (" ".join(tag_name(x) for x in cur["formal"]) + " ") * 3           # 今日の気づきを重くする
@@ -651,24 +652,35 @@ def retrieve(profile, signal, post_text, top_n=5, public_n=2):
     public = [first for kinds in (("option", "knowhow"), ("law",))
               for first in [next((r for r in pub_all if r["kind"] in kinds), None)] if first][:public_n]
     public += [r for r in pub_all if r not in public][:max(public_n - len(public), 0)]
+    # 事例・選択肢（知恵以外）を先に top_n_cases 件。知恵と枠を取り合わないように分けて選ぶ
+    core = [r for r in internal if r["kind"] != "knowhow"]
     picked = []
-    for kind in ("case", "knowhow", "option"):
-        first = next((r for r in internal if r["kind"] == kind), None)
+    for kind in ("case", "option"):
+        first = next((r for r in core if r["kind"] == kind), None)
         if first:
             picked.append(first)
-    for r in internal:
-        if len(picked) >= top_n:
+    for r in core:
+        if len(picked) >= top_n_cases:
             break
         if r not in picked:
             picked.append(r)
     picked.sort(key=lambda x: x["score"], reverse=True)
+    picked = picked[:top_n_cases]
+    now = {s["tag"] for s in signal["tags"]} | set(cur["formal"])
+    tips = sorted((r for r in internal if r["kind"] == "knowhow" and r["score"] > 0),
+                  key=lambda r: (-len(now & set(r.get("signals") or [])), -r["score"]))
+    for r in tips:
+        if sum(1 for x in picked if x["kind"] == "knowhow") >= knowhow_n:
+            break
+        if r not in picked and (now & set(r.get("signals") or []) or not now):
+            picked.append(r)
     for r in picked + public:
         r["snippet"] = best_snippet(r.get("full_text") or r.get("summary") or "", query)
-    return {"query": query, "items": picked[:top_n], "public": public}
+    return {"query": query, "items": picked, "public": public}
 
 
 # ── ⑥ 人軸検索（tech0-search の who.py の作者集計。関係の情報だけで選ぶ） ─
-KIND_WEIGHT = {"case": 1.0, "knowhow": 0.5, "option": 0.0}
+KIND_WEIGHT = {"case": 1.0, "knowhow": 0.0, "option": 0.0}   # 相談できる人は事例・相談履歴・担当履歴で選ぶ（知恵の書き手は数えない。CH-30）
 
 
 def who_to_ask(knowledge, profile, signal, current_author_id=None):

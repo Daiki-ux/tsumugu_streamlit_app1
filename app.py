@@ -79,6 +79,13 @@ div[data-testid="stVerticalBlock"] > div {{ margin-bottom: 2px; }}
 .stTabs [data-testid="stTab"]:hover {{ background:#EEF3F9 !important; }}
 .stTabs [data-testid="stTab"][aria-selected="true"] {{ background:#2F5D8A !important; border-color:#2F5D8A !important; }}
 .stTabs [data-testid="stTab"][aria-selected="true"] p {{ color:#fff !important; }}
+/* パイロット用の任意アンケート：反応の流れとは別の枠（点線・薄い背景・ラベル） */
+.st-key-pilot_survey {{ border:1.5px dashed #B8B2D6; background:#F7F6FC; border-radius:12px; padding:14px 18px 12px; margin-top:28px; }}
+.st-key-pilot_survey .sv-hd {{ display:flex; flex-wrap:wrap; align-items:center; gap:6px 10px; }}
+.st-key-pilot_survey .sv-tag {{ font-size:11.5px; font-weight:700; color:#5B4FA0; background:#ECE9F8; border-radius:999px; padding:2px 10px; }}
+.st-key-pilot_survey .sv-q {{ font-size:15px; font-weight:800; color:{INK}; }}
+.st-key-pilot_survey .sv-nt {{ font-size:11.5px; color:{SUB}; margin:4px 0 8px; }}
+.st-key-pilot_survey button p {{ font-size:13px; }}
 .sec {{ display:flex; flex-wrap:wrap; align-items:center; gap:4px 10px; margin:26px 0 10px; padding-bottom:6px; border-bottom:1px solid {LINE}; }}
 .sec .no {{ background:#2F5D8A; color:#fff; border-radius:999px; min-width:22px; height:22px; display:inline-flex; align-items:center;
             justify-content:center; font-size:12px; font-weight:800; }}
@@ -545,8 +552,9 @@ def page_company():
 # ── 画面2：日報（訪問後、登録すると反応が返る。v4 フェーズ 2・3） ───────────
 def show_reaction(r):
     """日報への反応。まとまりごとに番号付きの見出しで区切る
-      反応④：①判定（理由・重なった予兆・次の世代につなぎたいもの） ②次にすること ③相談する ④参考にする ⑤この後どうしたか
-      反応①〜③：判定（と過去の関連記録）→（②③は）この後どうしたか
+      反応④：①判定（理由・重なった予兆・次の世代につなぎたいもの） ②次にすること ③相談する ④参考にする
+      反応①〜③：判定（と過去の関連記録）
+      反応②〜④の下に、パイロット用の任意アンケート（この後どうしたか）を別枠で
       タグの確定や候補タグの昇格は運営側（本部）の判断なので、担当者の画面には出さない（変更記録 CH-25）"""
     sig, prof, post = r["signal"], r["profile"], r["post"]
     company = comp_by_id[prof["company_id"]]
@@ -625,15 +633,19 @@ def show_reaction(r):
                      for cx in sig["context"]),
              "予兆の判定はしていません。同じ企業の、関連する過去の記録です（担当者が代わっても届きます）", accent="#2F5D8A")
 
-    # ── この後どうしたか ──
+    # ── この後どうしたか：パイロット用の任意アンケート。反応の流れ（①〜）とは別の枠にする（変更記録 CH-31） ──
     if lvl >= 2:
-        section(next(no), "この後どうしましたか", "1 回のクリックで記録。支店長の「対話の状況」とパイロットの効果測定に使います")
-        cols = st.columns(4, gap="small")
-        for col, (kind, label) in zip(cols, FB.items()):
-            if col.button(label, key=f"fb_{kind}_{post['id']}", width="stretch"):
-                db.insert_feedback(prof["company_id"], me, kind)
-                db.log_audit(me, "feedback", prof["company_id"], kind)
-                st.toast(f"記録しました：{label}")
+        with st.container(key="pilot_survey"):
+            st.markdown("<div class='sv-hd'><span class='sv-tag'>パイロット用アンケート（任意）</span>"
+                        "<span class='sv-q'>この後どうしましたか？</span></div>"
+                        "<div class='sv-nt'>回答は任意です。1 回のクリックで記録され、支店長の「対話の状況」とパイロットの効果測定に使います。"
+                        "人事評価には使いません</div>", unsafe_allow_html=True)
+            cols = st.columns(4, gap="small")
+            for col, (kind, label) in zip(cols, FB.items()):
+                if col.button(label, key=f"fb_{kind}_{post['id']}", width="stretch"):
+                    db.insert_feedback(prof["company_id"], me, kind)
+                    db.log_audit(me, "feedback", prof["company_id"], kind)
+                    st.toast(f"記録しました：{label}（ご協力ありがとうございます）")
 
 
 ACTIVITIES = ["定例訪問", "決算説明", "資金のご相談", "着任・ご挨拶", "支店長同行", "その他"]
