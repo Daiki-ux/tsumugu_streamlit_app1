@@ -178,13 +178,29 @@ def test_result_is_plain_json():
 
 
 # ── パイロット版で足したもの（一言の振り分け・閲覧範囲・相談・候補タグの昇格） ─────────
-def test_voice_memo_becomes_report_draft():
+def test_voice_and_tidy_without_llm():
+    """🎤 音声の文字起こしと ✨ AI で整える（LLM なしは模擬）。整えた文でも予兆は同じように拾える"""
     import tsumugu
-    memo = "定例訪問。受注状況を確認。帰り際の雑談で、斎藤工場長が来春での退職を考えているらしいと聞いた"
-    post = tsumugu.new_post("C001", "C001-P1", "E001", "2026-09-15", "", post_id="P-VOICE")
-    d = tsumugu.draft_from_voice_memo(post, memo, use_llm=False)
-    assert d["report"].endswith("聞いた。") and "受注状況" in d["report"]               # 業務報告 1 本の下書き
-    assert "hearsay" not in post                                                   # ツムグの入力欄は増やさない
+    v = tsumugu.transcribe(b"dummy", "C001", use_llm=False)
+    assert v["by"] == "llm-sim" and "斎藤工場長" in v["text"] and "えーと" in v["text"]
+    t = tsumugu.tidy_report(v["text"], "C001", use_llm=False)
+    assert t["by"] == "llm-sim" and "えーと" not in t["text"] and "らしい" in t["text"]      # 伝聞は伝聞のまま
+    r = tsumugu.tidy_report("えーと、定例訪問です。社長が退職を考えてるって言ってました", "C004", use_llm=False)
+    assert r["text"] == "定例訪問です。社長が退職を考えていると言ってました。"
+    assert tsumugu.transcribe(b"dummy", "C004", use_llm=False) is None                    # 模擬はデモの 3 社だけ
+    post = tsumugu.new_post("C001", None, "E001", "2026-09-15", t["text"], post_id="P-TIDY")
+    assert tsumugu.run(post, use_llm=False, persist=False)["signal"]["fired"] is True
+
+
+def test_draft_is_saved_and_cleared():
+    import database as db
+    assert db.get_draft("C001", "E001") is None
+    db.save_draft("C001", "E001", "下書きの本文", "定例訪問")
+    assert db.get_draft("C001", "E001")["text"] == "下書きの本文"
+    db.save_draft("C001", "E001", "書き直した本文")                                       # 取引先 × 担当者ごとに 1 件（上書き）
+    assert db.get_draft("C001", "E001")["text"] == "書き直した本文"
+    db.delete_draft("C001", "E001")
+    assert db.get_draft("C001", "E001") is None
 
 
 def test_hearsay_wording_counts_toward_overlap_but_is_marked_unconfirmed():

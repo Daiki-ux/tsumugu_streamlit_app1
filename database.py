@@ -66,7 +66,7 @@ def ingest(reset=False):
     init_db()
     if reset:
         conn = get_connection()
-        for t in ["post_tags", "posts", "signals", "feedback", "audit_logs", "candidate_tags",
+        for t in ["post_drafts", "post_tags", "posts", "signals", "feedback", "audit_logs", "candidate_tags",
                   "assignments", "consultations", "staff", "contacts", "companies"]:
             conn.execute(f"DELETE FROM {t}")
         conn.execute("DELETE FROM knowledge WHERE source = 'internal'")
@@ -243,6 +243,24 @@ def insert_post(p):
              VALUES (?,?,?,?,?,?,?,?)""",
           (p["id"], p["company_id"], p.get("contact_id"), p["author_id"], p["posted_at"], p["text"],
            p.get("activity"), "SFA日報（パイロット期間）"))
+
+
+def save_draft(company_id, author_id, text, activity=None, contact_id=None):
+    """日報の下書きを保存（取引先 × 担当者ごとに 1 件、上書き）。戻り値は保存した日時"""
+    from datetime import datetime
+    at = datetime.now().strftime("%Y-%m-%d %H:%M")
+    _exec("INSERT OR REPLACE INTO post_drafts (company_id, author_id, text, activity, contact_id, saved_at) VALUES (?,?,?,?,?,?)",
+          (company_id, author_id, text, activity, contact_id, at))
+    return at
+
+
+def get_draft(company_id, author_id):
+    rows = _rows("SELECT * FROM post_drafts WHERE company_id = ? AND author_id = ?", (company_id, author_id))
+    return rows[0] if rows else None
+
+
+def delete_draft(company_id, author_id):
+    _exec("DELETE FROM post_drafts WHERE company_id = ? AND author_id = ?", (company_id, author_id))
 
 
 def find_same_post(company_id, author_id, posted_at, text):

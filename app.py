@@ -588,7 +588,8 @@ def run_demo(i):
         st.session_state["rp_date"] = date.fromisoformat(day)
     if activity:
         st.session_state["rp_activity"] = activity
-    st.session_state["rp_text"], st.session_state["rp_voice"] = text, ""
+    st.session_state["rp_text"] = text
+    st.session_state.pop("ai_suggest", None)
 
 
 def reset_all():
@@ -603,8 +604,7 @@ def reset_all():
 st.session_state.setdefault("me", "E001")
 st.session_state.setdefault("page", P_COMPANY)
 st.session_state.setdefault("rp_date", TODAY)
-for _k in ("rp_text", "rp_voice"):
-    st.session_state.setdefault(_k, "")
+st.session_state.setdefault("rp_text", "")
 
 with st.sidebar:
     st.title("🧵 ツムグ")
@@ -812,18 +812,53 @@ def show_reaction(r):
 ACTIVITIES = ["定例訪問", "決算説明", "資金のご相談", "着任・ご挨拶", "支店長同行", "その他"]
 
 
-def fill_from_voice(company_id):
-    """🎤 音声メモ → 業務報告の下書き（補助。入った内容は担当者が直してから登録する）"""
-    memo = st.session_state.get("rp_voice", "").strip()
-    if not memo:
-        st.session_state["flash_warn"] = "音声メモが空です"
+BY_LABEL = {"llm": "AI", "llm-sim": "AI（このデモでは用意した結果で模擬）", "rule": "言い回しの置き換え（AI のキーが無いときの簡易版）"}
+
+
+def on_voice(company_id):
+    """🎤 録音が終わったら文字起こしして、業務報告の後ろに足す（変更記録 CH-44）"""
+    key = f"rp_audio_{company_id}_{st.session_state.get('audio_n', 0)}"
+    audio = st.session_state.get(key)
+    if not audio:
         return
-    p = tsumugu.new_post(company_id, st.session_state.get(f"rp_contact_{company_id}"), me,
-                         st.session_state["rp_date"].isoformat(), "", post_id="DRAFT")
-    d = tsumugu.draft_from_voice_memo(p, memo)
-    st.session_state["rp_text"] = d["report"]
-    st.session_state["flash_info"] = (f"音声メモから業務報告の下書きを作りました（{'LLM' if d['generated_by'] == 'llm' else 'テンプレート'}）。"
-                                      "確認・修正してから登録してください。AI が書いた日報がそのまま SFA に入ることはありません")
+    res = tsumugu.transcribe(audio.getvalue(), company_id)
+    st.session_state["audio_n"] = st.session_state.get("audio_n", 0) + 1       # 録音欄を空に戻す
+    if not res:
+        st.session_state["flash_warn"] = ("このデモでは、音声の文字起こしはカナイ精工・太田電装・ヤマト化成だけ模擬しています。"
+                                          "AI（OpenAI）のキーを設定すると、どの取引先でも実際に文字起こしします")
+        return
+    cur = st.session_state.get("rp_text", "").strip()
+    st.session_state["rp_text"] = (cur + "\n" + res["text"]) if cur else res["text"]
+    st.session_state["flash_info"] = f"🎤 話した内容を文字に起こして、業務報告に入れました（{BY_LABEL[res['by']]}）。確認・修正してから登録してください"
+
+
+def on_tidy(company_id):
+    """✨ AI で整える：整理案を出すだけ。置き換えるかは担当者が決める（AI が書いた日報がそのまま SFA に入ることはない）"""
+    res = tsumugu.tidy_report(st.session_state.get("rp_text", ""), company_id)
+    if not res:
+        st.session_state["flash_warn"] = "業務報告が空です。先に書くか、🎤 で話してください"
+        return
+    st.session_state["ai_suggest"] = {"company_id": company_id, **res}
+
+
+def apply_tidy():
+    sug = st.session_state.pop("ai_suggest", None)
+    if sug:
+        st.session_state["rp_text"] = sug["text"]
+        st.session_state["flash_info"] = "AI の整理案で置き換えました。確認・修正してから登録してください"
+
+
+def close_tidy():
+    st.session_state.pop("ai_suggest", None)
+
+
+def on_save_draft(company_id):
+    text = st.session_state.get("rp_text", "").strip()
+    if not text:
+        st.session_state["flash_warn"] = "業務報告が空なので、下書きは保存していません"
+        return
+    at = db.save_draft(company_id, me, text, st.session_state.get("rp_activity"), st.session_state.get(f"rp_contact_{company_id}"))
+    st.session_state["flash_info"] = f"💾 下書きを保存しました（{at}）。次にこの取引先の日報を開くと、自動で読み込みます"
 
 
 def register(company_id):
@@ -842,8 +877,9 @@ def register(company_id):
         post = tsumugu.new_post(company_id, st.session_state.get(f"rp_contact_{company_id}"), me, day, text,
                                 activity=st.session_state.get("rp_activity"))
         st.session_state["result"] = tsumugu.run(post)
-    for k in ("rp_text", "rp_voice"):
-        st.session_state[k] = ""
+    db.delete_draft(company_id, me)
+    st.session_state["rp_text"] = ""
+    st.session_state.pop("ai_suggest", None)
 
 
 def page_report():
@@ -853,6 +889,16 @@ def page_report():
         return
     c = comp_by_id[company_id]
     company_header(c)
+    # 下書きがあれば、この取引先を開いたときに 1 回だけ読み込む（入力中の内容は上書きしない）
+    loaded = f"draft_loaded_{company_id}_{me}"
+    if not st.session_state.get(loaded):
+        st.session_state[loaded] = True
+        d = db.get_draft(company_id, me)
+        if d and not st.session_state.get("rp_text", "").strip():
+            st.session_state["rp_text"] = d["text"] or ""
+            if d["activity"] in ACTIVITIES:
+                st.session_state["rp_activity"] = d["activity"]
+            st.session_state["flash_info"] = f"💾 保存していた下書きを読み込みました（{d['saved_at']}）"
     with st.container(border=True):                                  # SFA の領域：いつもの日報
         st.caption("SFA の領域（これまで通り）— 日報の新規作成")
         contacts = db.get_contacts(company_id)
@@ -863,10 +909,23 @@ def page_report():
         c3.date_input("訪問日", key="rp_date")
         st.text_area("業務報告", key="rp_text", height=110,
                      placeholder="例：定例訪問。受注状況を確認。前年並みとのこと。設備更新の件はその後進展なし。")
-        with st.expander("🎤 音声メモから下書き（スマホで吹き込む人向けの補助）"):
-            st.text_area("音声メモ（文字起こし）", key="rp_voice", height=68,
-                         placeholder="例：定例訪問。受注状況を確認。帰り際の雑談で、斎藤工場長が来春での退職を考えているらしいと聞いた。")
-            st.button("業務報告の下書きにする", on_click=fill_from_voice, args=(company_id,))
+        # 入力の補助：🎤 音声で入力／✨ AI で整える／💾 下書き保存（変更記録 CH-44）
+        b1, b2, b3, _ = st.columns([1.2, 1.2, 1.1, 1.5], gap="small")
+        with b1.popover("🎤 音声で入力", width="stretch"):
+            st.caption("録音ボタンを押して話し、終わったらもう一度押します。話した内容を文字に起こして、業務報告に入れます")
+            st.audio_input("録音", key=f"rp_audio_{company_id}_{st.session_state.get('audio_n', 0)}",
+                           on_change=on_voice, args=(company_id,), label_visibility="collapsed")
+        b2.button("✨ AI で整える", on_click=on_tidy, args=(company_id,), width="stretch",
+                  help="言いよどみなどを除いて、報告の文に整えた案を出します。置き換えるかはあなたが決めます")
+        b3.button("💾 下書き保存", on_click=on_save_draft, args=(company_id,), width="stretch")
+        sug = st.session_state.get("ai_suggest")
+        if sug and sug["company_id"] == company_id:
+            st.markdown(f"<div class='hint'><div class='hint-h'><span class='hint-t'>AI の整理案</span><span class='hint-tag'>✨ AI のヒント</span></div>"
+                        f"<div class='hint-n'>{escape(BY_LABEL[sug['by']])}。書かれていない事実は足していません。置き換えるかはあなたが決めます</div>"
+                        f"<div class='hq'><span>{escape(sug['text'])}</span></div></div>", unsafe_allow_html=True)
+            a1, a2, _ = st.columns([2, 1, 2.5], gap="small")
+            a1.button("この内容で置き換える", on_click=apply_tidy, type="primary", width="stretch")
+            a2.button("閉じる", on_click=close_tidy, width="stretch")
         for k, fn in (("flash_warn", st.warning), ("flash_info", st.info)):
             if st.session_state.get(k):
                 fn(st.session_state.pop(k))
