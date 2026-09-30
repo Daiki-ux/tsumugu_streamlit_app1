@@ -1,0 +1,286 @@
+<title>ツムグ 全体構成図</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=Noto+Sans+JP:wght@400;500;700&family=Zen+Kaku+Gothic+New:wght@700;900&display=swap">
+<style>
+/* 層を上から下へ積む図（使う人 → 画面 → 処理 → データ）＋右に外部とのつながり。色は 2_ アーキテクチャ図と同じ体系 */
+:root{
+  --bg:#F7F6F1; --paper:#FFFFFF; --ink:#1E2637; --ink-2:#4B5568; --line:#D8D9D3;
+  --ai:#2F5D8A; --ai-soft:#E4EDF6; --sf:#5B6B7F; --sf-soft:#EEF0F3; --now:#B8791A; --now-soft:#FBF1DC;
+  --llm:#2A8577; --llm-soft:#E0F2EE; --no:#B5443C; --no-soft:#F8E5E3; --leg:#3D7A3A; --leg-soft:#E6F2E2;
+  --display:"Zen Kaku Gothic New","Noto Sans JP","Hiragino Sans",sans-serif;
+  --body:"Noto Sans JP","Hiragino Sans",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){ --bg:#15181F; --paper:#1E222B; --ink:#EDEDE8; --ink-2:#B3B8C2; --line:#3A3F4A; --ai:#8FB6E0; --ai-soft:#24344A; --sf:#AEB7C4; --sf-soft:#2A2F38; --now:#E0A94A; --now-soft:#3A2F17; --llm:#6CC6B5; --llm-soft:#1C3A35; --no:#E58A82; --no-soft:#432322; --leg:#8CCB86; --leg-soft:#22361F; color-scheme:dark; }
+}
+:root[data-theme="dark"]{ --bg:#15181F; --paper:#1E222B; --ink:#EDEDE8; --ink-2:#B3B8C2; --line:#3A3F4A; --ai:#8FB6E0; --ai-soft:#24344A; --sf:#AEB7C4; --sf-soft:#2A2F38; --now:#E0A94A; --now-soft:#3A2F17; --llm:#6CC6B5; --llm-soft:#1C3A35; --no:#E58A82; --no-soft:#432322; --leg:#8CCB86; --leg-soft:#22361F; color-scheme:dark; }
+
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.7;padding-inline:16px;padding-block:32px 64px}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0}
+p{margin:0}
+.wrap{max-width:1180px;margin:0 auto;display:grid;gap:36px}
+header{display:grid;gap:12px}
+.eyebrow{font-family:var(--mono);font-size:13px;letter-spacing:.08em;color:var(--ink-2)}
+h1{font-size:clamp(28px,4vw,42px);font-weight:900;line-height:1.25}
+.lede{font-size:18px;max-width:46em}
+.legend{display:flex;flex-wrap:wrap;gap:8px 12px;font-size:14px}
+.legend span{display:inline-flex;align-items:center;gap:6px;padding:2px 12px;border:1px solid var(--line);border-radius:999px;background:var(--paper)}
+.sw{width:12px;height:12px;border-radius:3px;display:inline-block}
+
+section.slide{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:28px 32px;display:grid;gap:20px;min-width:0}
+section.slide>h2{font-size:26px;font-weight:700;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+section.slide>h2 .sub{font-size:15px;font-weight:500;color:var(--ink-2);font-family:var(--body)}
+.note{font-size:14px;color:var(--ink-2)}
+code,.file{font-family:var(--mono);font-size:.88em;background:var(--ai-soft);color:var(--ink);padding:1px 6px;border-radius:4px;white-space:nowrap}
+
+/* ---- 01 全体の構成 ---- */
+.arch{display:grid;grid-template-columns:minmax(0,1fr) 270px;column-gap:28px;row-gap:0}
+.arch .main{grid-column:1;display:grid;gap:0;min-width:0}
+.arch .side{grid-column:2;display:grid;align-content:start;gap:14px;min-width:0}
+.tier{border:1.5px solid var(--line);border-radius:10px;padding:14px 16px 16px;display:grid;gap:10px;min-width:0}
+.tier>.hd{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 12px}
+.tier>.hd b{font-family:var(--display);font-size:18px}
+.tier>.hd small{font-size:13px;color:var(--ink-2)}
+.tier.users{background:var(--paper)}
+.tier.app{background:var(--sf-soft);border-color:var(--sf)}
+.tier.proc{background:var(--ai-soft);border-color:var(--ai)}
+.tier.data{background:var(--now-soft);border-color:var(--now)}
+.tier.deploy{background:var(--paper);border-style:dashed}
+.row{display:flex;flex-wrap:wrap;gap:8px}
+.chip{background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:6px 12px;font-size:14px;line-height:1.45;min-width:0}
+.chip b{display:block;font-size:15px}
+.chip .s{font-size:12.5px;color:var(--ink-2)}
+.conn{display:flex;align-items:center;gap:10px;padding:6px 0 6px 28px;font-size:13px;color:var(--ai);font-weight:700}
+.conn::before{content:"";width:2px;height:26px;background:var(--ai);position:relative}
+.conn .ar{font-family:var(--mono)}
+.sub2{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:10px}
+.box{background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:10px 12px;display:grid;gap:8px;min-width:0}
+.box>.t{font-weight:700;font-size:15px}
+.box>.t small{font-weight:500;color:var(--ink-2);font-size:12.5px;margin-left:6px}
+.chain{display:flex;flex-wrap:wrap;align-items:center;gap:4px 2px;font-size:13.5px}
+.chain span{background:var(--ai-soft);border-radius:6px;padding:2px 8px;white-space:nowrap}
+.chain span.l{outline:1.5px dashed var(--llm);outline-offset:-1.5px}
+.chain i{font-style:normal;color:var(--ai);padding:0 2px}
+.tables{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px}
+.tables .chip code{background:transparent;padding:0;font-size:12px;color:var(--ink-2);white-space:normal}
+.ext{border-radius:10px;padding:12px 14px;display:grid;gap:6px;font-size:14px;position:relative}
+.ext b{font-family:var(--display);font-size:16px}
+.ext .how{font-size:12.5px;font-weight:700}
+.ext.llm{background:var(--llm-soft);border:1.5px dashed var(--llm)}
+.ext.llm .how{color:var(--llm)}
+.ext.pub{background:var(--paper);border:1.5px solid var(--ai)}
+.ext.pub .how{color:var(--ai)}
+.ext.no{background:var(--no-soft);border:1.5px solid var(--no)}
+.ext.no .how{color:var(--no)}
+.ext.src{background:var(--paper);border:1.5px solid var(--now)}
+.ext.src .how{color:var(--now)}
+.spacer-users{height:0}
+
+/* ---- 02 日報 1 件の流れ ---- */
+.flow{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;counter-reset:none}
+.step{border:1px solid var(--line);border-top:4px solid var(--ai);border-radius:8px;padding:10px 12px;display:grid;gap:6px;align-content:start;background:var(--paper);min-width:0}
+.step.l{border-top-color:var(--llm)}
+.step .no{font-family:var(--mono);font-size:13px;color:var(--ai)}
+.step.l .no{color:var(--llm)}
+.step b{font-family:var(--display);font-size:17px}
+.step p{font-size:13.5px}
+.step .use{font-size:12px;color:var(--ink-2);border-top:1px dashed var(--line);padding-top:6px}
+.out{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.out .chip{border-color:var(--ai)}
+.out .chip.survey{border:1.5px dashed #7A4EA3}
+
+/* ---- tables ---- */
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:15px;min-width:640px}
+th,td{text-align:left;vertical-align:top;padding:9px 12px;border-bottom:1px solid var(--line)}
+th{font-size:13px;letter-spacing:.04em;color:var(--ink-2);font-weight:700;white-space:nowrap}
+td:first-child{white-space:nowrap;font-weight:700}
+.pill{display:inline-block;font-size:12.5px;font-weight:700;padding:0 9px;border-radius:999px;white-space:nowrap;background:var(--sf-soft);color:var(--sf)}
+.pill.llm{background:var(--llm-soft);color:var(--llm)}
+.pill.no{background:var(--no-soft);color:var(--no)}
+
+.promise{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px}
+.promise div{border-left:4px solid var(--no);background:var(--no-soft);border-radius:0 8px 8px 0;padding:10px 14px;font-size:14.5px}
+.promise b{display:block;font-family:var(--display);font-size:16px}
+
+@media (max-width:860px){
+  .arch{grid-template-columns:minmax(0,1fr);row-gap:14px}
+  .arch .side{grid-column:1}
+  .sub2{grid-template-columns:minmax(0,1fr)}
+  section.slide{padding:22px 16px}
+}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">個人の習作 ／ パイロット版（Streamlit）／ 2026-09-29 時点のコード</div>
+    <h1>ツムグ 全体構成図</h1>
+    <p class="lede">日報を登録すると、ツムグが過去の記録・社内の事例・相談できる人を照らし合わせて、SFA の画面の中に反応を返します。このページは、いま動いているパイロット版の組み立てを 1 枚にまとめたものです。本番（Salesforce 版）の設計は <span class="file">2_ツムグ_アーキテクチャ</span> にあります。</p>
+    <div class="legend">
+      <span><i class="sw" style="background:var(--sf)"></i>SFA の画面（模擬）</span>
+      <span><i class="sw" style="background:var(--ai)"></i>ツムグの処理</span>
+      <span><i class="sw" style="background:var(--now)"></i>データ</span>
+      <span><i class="sw" style="background:var(--llm)"></i>AI（LLM・無くても動く）</span>
+      <span><i class="sw" style="background:var(--no)"></i>つながないもの</span>
+    </div>
+  </header>
+
+  <section class="slide" aria-labelledby="h-arch">
+    <h2 id="h-arch">全体の構成<span class="sub">上から「使う人 → 画面 → 処理 → データ」。右は外とのつながり</span></h2>
+    <div class="arch">
+      <div class="main">
+        <div class="tier users">
+          <div class="hd"><b>使う人</b><small>サイドバーで行員を選ぶ（SFA のログインの代わり）。役割で見える企業と画面が決まる</small></div>
+          <div class="row">
+            <div class="chip"><b>法人担当者</b><span class="s">自分の担当先（前任者の記録も）</span></div>
+            <div class="chip"><b>支店長・上長</b><span class="s">自支店の全担当先</span></div>
+            <div class="chip"><b>本部 事業承継支援室</b><span class="s">相談を受けた企業</span></div>
+            <div class="chip"><b>部長</b><span class="s">すべて</span></div>
+          </div>
+        </div>
+        <div class="conn"><span class="ar">↕</span>見る・日報を書く</div>
+        <div class="tier app">
+          <div class="hd"><b>画面</b><span class="file">app.py</span><small>Streamlit で SFA の中の「ツムグ領域」を模した 5 画面</small></div>
+          <div class="row">
+            <div class="chip"><b>🏢 取引先（訪問前）</b><span class="s">予兆と根拠の記録・次の世代につなぎたいもの・会話のヒント・面談メモ履歴</span></div>
+            <div class="chip"><b>📝 日報（訪問後）</b><span class="s">業務報告＋🎤音声・✨AI で整える・💾下書き → 反応</span></div>
+            <div class="chip"><b>👀 対話の状況</b><span class="s">支店長向け。点数ではなく段階で</span></div>
+            <div class="chip"><b>🧭 本部</b><span class="s">相談・くり返し出ている話</span></div>
+            <div class="chip"><b>📊 パイロット評価・監査</b><span class="s">アンケート集計・監査ログ</span></div>
+          </div>
+        </div>
+        <div class="conn"><span class="ar">↕</span>日報を登録する ／ 反応を返す</div>
+        <div class="tier proc">
+          <div class="hd"><b>処理</b><span class="file">tsumugu.py</span><small>判定の設定はすべて <span class="file">rules.json</span></small></div>
+          <div class="sub2">
+            <div class="box">
+              <div class="t">反応層<small>日報 1 件ごとに走る</small></div>
+              <div class="chain"><span class="l">② 抽出</span><i>→</i><span>③ 照合</span><i>→</i><span class="l">④ 判定</span><i>→</i><span>⑤ 検索</span><i>→</i><span>⑥ 人軸</span><i>→</i><span class="l">⑦ 次の一手</span></div>
+              <p class="note">点線は LLM を使える工程。キーが無ければ辞書・if 文・定型文で動く</p>
+            </div>
+            <div class="box">
+              <div class="t">ナレッジ層<small>日報とは別に、手動で回す</small></div>
+              <div class="chain"><span>⓪ 収集 <code>crawler.py</code></span><i>→</i><span>貯める</span><i>→</i><span>索引 <code>ranking.py</code></span></div>
+              <p class="note">索引は TF-IDF（文字 2〜3 gram）。⑤ 検索がこれを使う</p>
+            </div>
+            <div class="box">
+              <div class="t">訪問前のまとめ<small>取引先を開いたとき</small></div>
+              <p class="note" style="color:var(--ink)">過去 36 か月の予兆の一覧、次の世代につなぎたいもの（雇用・取引・技術と担い手）、会話のヒント</p>
+            </div>
+            <div class="box">
+              <div class="t">日報の入力補助<small>書く手間を減らす</small></div>
+              <p class="note" style="color:var(--ink)">音声の文字起こし、言いよどみを除いた整理案、下書きの保存と読み込み</p>
+            </div>
+          </div>
+        </div>
+        <div class="conn"><span class="ar">↕</span>読む・書く</div>
+        <div class="tier data">
+          <div class="hd"><b>データ</b><span class="file">data/tsumugu.db</span><small>SQLite 1 ファイル。<span class="file">schema.sql</span> ／ <span class="file">database.py</span></small></div>
+          <div class="tables">
+            <div class="chip"><b>行内データ</b><code>companies contacts staff assignments consultations</code></div>
+            <div class="chip"><b>日報</b><code>posts post_tags post_drafts</code></div>
+            <div class="chip"><b>ナレッジ</b><code>knowledge sources</code></div>
+            <div class="chip"><b>判定と反応</b><code>signals candidate_tags feedback</code></div>
+            <div class="chip"><b>監査</b><code>audit_logs</code></div>
+          </div>
+        </div>
+      </div>
+
+      <aside class="side" aria-label="外とのつながり">
+        <div class="ext src">
+          <span class="how">最初に 1 回 取り込む</span>
+          <b>合成データ（架空）</b>
+          <span>10 社・日報 79 件・行員 10 人・社内ナレッジ 24 件</span>
+          <span class="note"><span class="file">convert_source_data.py</span> → <span class="file">data.json</span> → DB</span>
+        </div>
+        <div class="ext pub">
+          <span class="how">⓪ 収集で取りに行く</span>
+          <b>公的なサイト 9 ページ</b>
+          <span>中小機構（支援制度・手引き）7、国税庁（事業承継税制）2</span>
+          <span class="note">外部の事例記事は集めない</span>
+        </div>
+        <div class="ext llm">
+          <span class="how">任意（キーがあるときだけ）</span>
+          <b>LLM（OpenAI）</b>
+          <span>抽出・判定の理由文・次の一手・技術名の取り出し・音声の文字起こし・日報の整理</span>
+          <span class="note">キーが無いときは用意した結果（<span class="file">docs/*.json</span>）で模擬し、画面にそう書く</span>
+        </div>
+        <div class="ext no">
+          <span class="how">つながない</span>
+          <b>融資・格付け・人事評価</b>
+          <span>判定の結果を流さない。記録を評価に使わない</span>
+        </div>
+      </aside>
+    </div>
+    <div class="tier deploy">
+      <div class="hd"><b>公開</b><small>非公開の GitHub リポジトリ <span class="file">nonsmoker-code/tsumugu-pilot-sketch</span> → Streamlit Community Cloud（main にマージすると反映）</small></div>
+    </div>
+  </section>
+
+  <section class="slide" aria-labelledby="h-flow">
+    <h2 id="h-flow">日報 1 件が登録されたとき<span class="sub"><code>tsumugu.run()</code> の順番どおり</span></h2>
+    <div class="flow">
+      <div class="step"><span class="no">①</span><b>登録</b><p>日報を記録に加える。同じ内容の二重登録は除き、下書きは消す</p><span class="use">posts ／ 監査ログ</span></div>
+      <div class="step l"><span class="no">②</span><b>抽出</b><p>文から予兆の言い回しを拾う。「らしい」など伝え聞きは「未確認」の印を付ける</p><span class="use">rules.json の言い回し辞書（LLM 任意）</span></div>
+      <div class="step"><span class="no">③</span><b>照合</b><p>その会社の過去 36 か月の記録と担当交代を並べ、予兆ごとに いつ・誰が・何回 をまとめる</p><span class="use">pandas</span></div>
+      <div class="step l"><span class="no">④</span><b>判定</b><p>種類の違う予兆が 3 つ以上重なり、うち 2 系統が直近 12 か月に出たときだけ知らせる。反応は 4 段階</p><span class="use">if 文（理由文は LLM 任意）</span></div>
+      <div class="step"><span class="no">⑤</span><b>検索</b><p>社内の支援事例、現場の知恵、公的な支援制度・法令から近いものを選ぶ</p><span class="use">ranking.py（TF-IDF）</span></div>
+      <div class="step"><span class="no">⑥</span><b>人軸</b><p>前任者・似た事例の担当者・相談を受けた人を出す。外部の専門家は種類と行内の窓口だけ</p><span class="use">担当履歴・相談記録</span></div>
+      <div class="step l"><span class="no">⑦</span><b>次の一手</b><p>お客さまに確かめる会話のヒントと、行内での準備を作る</p><span class="use">定型文（LLM 任意）</span></div>
+    </div>
+    <div class="out">
+      <div class="chip"><b>① 判定</b><span class="s">状態・次の世代につなぎたいもの・理由・重なった予兆</span></div>
+      <div class="chip"><b>② 次にすること</b><span class="s">会話のヒント・行内での準備</span></div>
+      <div class="chip"><b>③ 相談する</b><span class="s">直接相談する／上司に相談する・そのほかの相談先</span></div>
+      <div class="chip"><b>④ 参考にする</b><span class="s">社内の支援事例・現場の知恵・公的な支援制度・法令</span></div>
+      <div class="chip survey"><b>パイロット用アンケート</b><span class="s">対話を始めた／本部に相談した／案件になった／今回は見送り → feedback</span></div>
+    </div>
+    <p class="note">反応の 4 段階：1 予兆は出ていません ／ 2 過去に関連する記録があります ／ 3 これまでにない変化が続いています（担当者には「くり返し出ている話」）／ 4 支援の検討が必要かもしれません</p>
+  </section>
+
+  <section class="slide" aria-labelledby="h-files">
+    <h2 id="h-files">ファイルの役割<span class="sub">リポジトリの中身</span></h2>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>ファイル</th><th>役割</th><th>使うもの</th></tr></thead>
+        <tbody>
+          <tr><td>app.py</td><td>画面。役割ごとの 5 画面、デモ ①〜⑦、日報の入力補助、反応の表示</td><td><span class="pill">Streamlit</span></td></tr>
+          <tr><td>tsumugu.py</td><td>処理の本体。②〜⑦、訪問前のまとめ、次の世代につなぎたいもの、文字起こし・整理</td><td><span class="pill">pandas</span> <span class="pill llm">OpenAI（任意）</span></td></tr>
+          <tr><td>ranking.py</td><td>ナレッジの検索エンジン</td><td><span class="pill">scikit-learn TF-IDF</span></td></tr>
+          <tr><td>crawler.py</td><td>公的なサイトを取りに行き、ナレッジの行にする。生 HTML は data/raw/ に保存</td><td><span class="pill">requests</span> <span class="pill">BeautifulSoup</span></td></tr>
+          <tr><td>database.py ／ schema.sql</td><td>DB の作成・取り込み・読み書き・監査ログ</td><td><span class="pill">SQLite</span></td></tr>
+          <tr><td>rules.json</td><td>予兆の定義と言い回し、発火の条件、反応の言葉、収集先、使ってはいけない言葉</td><td>設定</td></tr>
+          <tr><td>data.json</td><td>DB に入れる行内データ（合成データから変換）</td><td>データ</td></tr>
+          <tr><td>docs/knowhow.json</td><td>現場の知恵 12 件（社内チャットから集める想定の手書き版）</td><td>データ</td></tr>
+          <tr><td>docs/value_extractions.json<br>docs/voice_samples.json</td><td>LLM が無いときに使う、用意した結果（技術名と担い手、文字起こしと整理）</td><td><span class="pill llm">LLM の模擬</span></td></tr>
+          <tr><td>tests/test_tsumugu.py</td><td>抽出・判定・検索などのテスト 24 件</td><td><span class="pill">pytest</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="slide" aria-labelledby="h-diff">
+    <h2 id="h-diff">パイロット版と本番の違い<span class="sub">本番は 2_ アーキテクチャ・1_ 設計書の想定</span></h2>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>項目</th><th>パイロット版（いま）</th><th>本番の想定</th></tr></thead>
+        <tbody>
+          <tr><td>画面</td><td>Streamlit で SFA を模した画面</td><td>Salesforce の中にツムグの表示領域を持つ。日報の書き方はこれまで通り</td></tr>
+          <tr><td>ログイン</td><td>サイドバーで行員を選ぶ</td><td>SFA のログインと権限をそのまま使う</td></tr>
+          <tr><td>行内データ</td><td>架空の合成データ（10 社）</td><td>SFA の日報・顧客マスタ、行員・担当履歴、案件記録</td></tr>
+          <tr><td>AI</td><td>キーが無ければ用意した結果で模擬</td><td>LLM で抽出・文字起こし・整理（日報の下書きは SFA の既製機能）</td></tr>
+          <tr><td>現場の知恵</td><td>手で用意した 12 件</td><td>社内チャットの決まったチャンネルから夜間に取り込む（Q-07）</td></tr>
+          <tr><td>公開</td><td>Streamlit Community Cloud</td><td>行内の環境</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="promise">
+      <div><b>融資・与信とつながない</b>判定の結果を与信のシステムに流さない。点数やランキングを付けない</div>
+      <div><b>人事評価に使わない</b>日報の記録やツムグの反応を、書いた人の評価に使わない</div>
+      <div><b>すべて記録する</b>閲覧・検索・相談を監査ログに残し、目的外の利用を後から確かめられる</div>
+    </div>
+  </section>
+</div>
