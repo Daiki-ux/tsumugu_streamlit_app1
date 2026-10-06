@@ -1,5 +1,5 @@
 # docs/slides/merge_deck.py — 前段資料とシステムパートを 1 つの .pptx にまとめる
-#   使い方: python merge_deck.py 前段.pptx システムパート.pptx 出力.pptx
+#   使い方: python merge_deck.py 前段.pptx システムパート.pptx 出力.pptx [先頭から移す枚数（既定 1、別案は 2）]
 #   ・前段のデザイン（テーマ・レイアウト）を土台に、システムパートのスライドを後ろへ足す
 #   ・システムパートの 1 枚目（エグゼクティブサマリ）は全体の 2 枚目へ移す
 #   ・前段 10 枚目（導入によって期待される効果）はシステムパートの効果の 1 枚に統合したので外す
@@ -14,7 +14,8 @@ from pathlib import Path
 
 FRONT, SYSTEM, OUT = sys.argv[1], sys.argv[2], sys.argv[3]
 DROP_FRONT = [10]           # 外す前段のスライド番号（1 始まり）
-SUMMARY_TO = 2              # システムパート 1 枚目を置く位置
+SUMMARY_TO = 2              # システムパートの先頭（サマリ）を置く位置
+LEAD = int(sys.argv[4]) if len(sys.argv) > 4 else 1   # 先頭から移す枚数
 
 tmp = Path(tempfile.mkdtemp())
 base, sysd = tmp / "base", tmp / "sys"
@@ -112,7 +113,7 @@ for i, x in enumerate(front_ids, 1):    # 外すスライドは関係ごと消�
     slide.unlink(); srels.unlink()
     ct = ct.replace(f'<Override PartName="/ppt/{target}" ContentType="{SLIDE_CT}"/>', "")
 front_ids = [x for i, x in enumerate(front_ids, 1) if i not in DROP_FRONT]
-order = front_ids[:SUMMARY_TO - 1] + [new_ids[0]] + front_ids[SUMMARY_TO - 1:] + new_ids[1:]
+order = front_ids[:SUMMARY_TO - 1] + new_ids[:LEAD] + front_ids[SUMMARY_TO - 1:] + new_ids[LEAD:]
 pres = pres.replace(lst.group(0), "<p:sldIdLst>" + "".join(order) + "</p:sldIdLst>")
 
 write(base / "[Content_Types].xml", ct)
