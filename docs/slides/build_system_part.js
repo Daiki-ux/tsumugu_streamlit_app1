@@ -1,8 +1,14 @@
 // docs/slides/build_system_part.js — 特別監査会資料の「システムパート」を作る（前段資料と同じデザイン）
 //   使い方: NODE_PATH=<pptxgenjs のある node_modules> node docs/slides/build_system_part.js out.pptx
-//   1 枚目はエグゼクティブサマリ（merge_deck.py が全体の 2 枚目へ移す）。ページ番号は merge_deck.py が振り直す
+//   1 枚目はエグゼクティブサマリ（別案はサマリとストーリーの 2 枚。merge_deck.py が全体の 2 枚目へ移す）。ページ番号は merge_deck.py が振り直す
 const pptxgen = require("pptxgenjs");
 const OUT = process.argv[2];
+// VARIANT=story で別案（外部環境 → 内部環境 → 解決策 → 文化 → 収益 → その先 の大枠を前に出した版）
+// VARIANT=short で別案の 7 分版（前段の背景などを 1 枚に作り直した統合スライドを含む）
+const SHORT = process.env.VARIANT === "short";
+const ALT = process.env.VARIANT === "story" || SHORT;
+const S = (base, short) => (SHORT ? short : base);
+const V = (base, alt) => (ALT ? alt : base);
 
 // 前段資料（デジタル庁デザインシステムをもとにした資料）の色と寸法
 const C = {
@@ -51,7 +57,12 @@ function table(s, rows, o) {
 {
   const s = pres.addSlide();
   head(s, "エグゼクティブサマリ", null, "サマリ");
-  const rows = [
+  const rows = ALT ? [
+    ["WHY", "なぜ", "貸出の機会が増えた今、地場企業とのつながりの深さが銀行の差になる。だが地場企業は承継に不安を抱え、行内で承継に取り組める人は限られ、知見は異動のたびに失われる"],
+    ["WHAT", "何を", "ベテランの勘と判断基準を言葉にし、LLM で経験の浅い担当者にも知見と示唆を届ける「ツムグ」。承継に取り組める人を増やす。書くのはいつもの日報だけ"],
+    ["HOW", "どうやって", "日々の日報がクエリとなり、貯まった記録から示唆が返る。事業の継続を意識した営業を文化にする。ツムグの情報は融資の判断には使わない"],
+    ["ROI", "投資対効果", "企業が続けば貸出が続き、承継・相続の支援は手数料になる。3 年の費用 4,900 万円に対し、中位の試算で効果は約 2.3 億円（約 4.8 倍）、2 年目に回収"],
+  ] : [
     ["WHY", "なぜ", "金利のある世界では、地域企業との関係の深さが収益の差になる。その深さは担当者個人の記憶にあり、異動のたびに失われ、支援の機会を見落としている"],
     ["WHAT", "何を", "Salesforce の画面の中に置く「つなぐ層」。いつもの日報を読み、過去の記録と重ねて予兆に意味を付け、相談できる人と社内の支援事例につなぐ。最初のテーマは事業承継"],
     ["HOW", "どうやって", "新しい入力はつくらない。AI が記録・事例・人を集めて読み、予兆の判断には現場の知見（ベテランの勘と判断基準）を言葉にした基準を使う。点数化せず、与信・人事評価には使わない"],
@@ -66,8 +77,106 @@ function table(s, rows, o) {
     T(s, body, { x: X0 + 2.15, y, w: CW - 2.35, h: 0.95, fontSize: 15, valign: "middle", lineSpacingMultiple: 1.15 });
   });
   box(s, X0, 6.2, CW, 0.62, C.blueMid);
-  T(s, "その関係を、個人の記憶ではなく、組織の資産にする。", { x: X0 + 0.3, y: 6.2, w: CW - 0.6, h: 0.62, fontSize: 18, bold: true, color: C.white, valign: "middle" });
-  s.addNotes("結論から。なぜ：金利のある世界では関係の深さが収益の差になるのに、その深さは担当者の記憶にあり、異動で失われる。何を：SFAの中の『つなぐ層』。最初のテーマは事業承継。どうやって：新しい入力はつくらず、AIが記録を読み、予兆の判断には現場の知見を言葉にした基準を使う。投資対効果：3年で費用4,900万円に対し、中位で約2.3億円。その7割は攻めの効果です。");
+  T(s, V("その関係を、個人の記憶ではなく、組織の資産にする。", "貸し続けられる環境を、自ら作る。"), { x: X0 + 0.3, y: 6.2, w: CW - 0.6, h: 0.62, fontSize: 18, bold: true, color: C.white, valign: "middle" });
+  if (ALT) s.addNotes("結論から。なぜ：貸出の機会が増えた今、地場企業とのつながりが差になるのに、地場企業は承継に不安を抱え、行内で承継に取り組める人は限られている。何を：ベテランの知見を言葉にし、LLMで経験の浅い担当者にも届けるツムグ。承継に取り組める人を増やします。どうやって：日報がクエリになり示唆が返る。事業の継続を意識した営業を文化にします。投資対効果：企業が続けば貸出が続き、支援は手数料にもなる。3年で費用4,900万円に対し中位で約2.3億円。一言でいうと、貸し続けられる環境を自ら作る、です。");
+  else s.addNotes("結論から。なぜ：金利のある世界では関係の深さが収益の差になるのに、その深さは担当者の記憶にあり、異動で失われる。何を：SFAの中の『つなぐ層』。最初のテーマは事業承継。どうやって：新しい入力はつくらず、AIが記録を読み、予兆の判断には現場の知見を言葉にした基準を使う。投資対効果：3年で費用4,900万円に対し、中位で約2.3億円。その7割は攻めの効果です。");
+}
+
+// ============ ストーリーの全体像（別案だけ） ============
+if (ALT) {
+  const s = pres.addSlide();
+  head(s, "ツムグのストーリー", "なぜ銀行がツムグに投資するのか。外部環境から、その先の広がりまで", "サマリ");
+  const st = [
+    ["外部環境", "貸出の機会が増え、地場企業とのつながりの深さが差になる。一方、地場企業は高齢化と承継問題を抱える", C.grey, C.sub],
+    ["内部環境", "承継の課題に取り組める人は限られる。定期異動も多く、スキルと知見は個人の中にとどまる", C.grey, C.sub],
+    ["解決策：ツムグ", "ベテランの勘と判断基準を言葉にし、LLM で経験の浅い担当者にも届ける。書くのはいつもの日報だけ", C.blueSoft, C.blue],
+    ["文化", "日報がクエリとなり、貯まった記録から示唆が返る。事業の継続を意識した営業が当たり前になる", C.blueSoft, C.blue],
+    ["収益", S("企業が続けば、雇用と技術が守られ、貸出が続く。承継・相続の支援は手数料に。信頼で取引が安定する", "企業が続けば貸出が続き、承継・相続の支援は手数料に。3 年で効果は約 2.3 億円（費用の約 4.8 倍）"), C.greenSoft, C.green],
+    ["その先", "承継 → 成長 → 相続へと支援が深まり、銀行は地域の企業と企業をつなぐ役になる", C.greenSoft, C.green],
+  ];
+  const gap = 0.35, w = (CW - gap * 2) / 3, h = 1.45;
+  st.forEach(([k, d, f, col], i) => {
+    const x = X0 + (i % 3) * (w + gap), y = 2.45 + Math.floor(i / 3) * (h + 0.25);
+    box(s, x, y, w, h, f);
+    T(s, [{ text: `${i + 1}　${k}`, options: { fontSize: 16, bold: true, color: col, breakLine: true } }, { text: " ", options: { fontSize: 5, breakLine: true } }, { text: d, options: { fontSize: 12.5 } }],
+      { x: x + 0.2, y: y + 0.15, w: w - 0.4, h: h - 0.25, lineSpacingMultiple: 1.2 });
+    if (i % 3 < 2) arrow(s, x + w + 0.04, y + h / 2, gap - 0.08);
+  });
+  box(s, X0, 5.9, CW, 0.85, C.blueMid);
+  T(s, [{ text: "貸し続けられる環境を、自ら作る。　", options: { fontSize: 20, bold: true, color: C.white } }, { text: "融資するか、しないかを判断するだけの銀行は先細る", options: { fontSize: 13, color: C.white } }],
+    { x: X0 + 0.3, y: 5.9, w: CW - 0.6, h: 0.85, valign: "middle" });
+  s.addNotes("ストーリーの全体像です。外部環境：貸出の機会が増え、地場企業とのつながりが差になる一方、地場企業は承継問題を抱える。内部環境：承継に取り組める人は限られ、異動で知見は属人化している。そこでツムグ。ベテランの知見を言葉にし、LLMで経験の浅い担当者にも届けて、取り組める人を増やす。日報がクエリとなって示唆が返り、事業の継続を意識した営業が文化になる。企業が続けば貸出が続き、支援は手数料にもなる。そしてその先、銀行は地域のつなぎ役になる。融資するかしないかだけの銀行は先細る。だからこそ、貸し続けられる環境を自ら作る。");
+}
+
+// ============ 外部環境（7 分版だけ：前段 2〜4 枚目と「なぜ事業承継から」を 1 枚に） ============
+if (SHORT) {
+  const s = pres.addSlide();
+  head(s, "外部環境：関係の深さが、銀行の差になる", "金利が戻り、貸出の機会が増えた。その機会を捉えられるかは、地場企業との関係の深さで決まる", "外部環境");
+  const cw = (CW - 0.5) / 3, y = 2.45;
+  // 1. 金利
+  box(s, X0, y, cw, 3.15, C.grey);
+  T(s, "金利が戻った", { x: X0 + 0.2, y: y + 0.12, w: cw - 0.4, h: 0.35, fontSize: 15, bold: true });
+  s.addChart(pres.charts.LINE, [{ name: "政策金利（%）", labels: ["2016/1", "2024/3", "2024/7", "2025/1", "2026/6"], values: [-0.1, 0.1, 0.25, 0.5, 1.0] }],
+    { x: X0 + 0.1, y: y + 0.5, w: cw - 0.2, h: 2.0, chartColors: [C.blue], lineSize: 2.5, lineDataSymbol: "circle", lineDataSymbolSize: 6,
+      showValue: true, dataLabelPosition: "t", dataLabelFontSize: 9, dataLabelFontFace: F, dataLabelColor: C.ink, dataLabelFormatCode: "0.00",
+      catAxisLabelFontSize: 9, catAxisLabelFontFace: F, catAxisLabelColor: C.sub, valAxisHidden: true, valGridLine: { style: "none" }, catGridLine: { style: "none" }, showLegend: false });
+  T(s, "政策金利は 2026 年 6 月に 1.00%。年内のさらなる引き上げも見込まれる", { x: X0 + 0.2, y: y + 2.5, w: cw - 0.4, h: 0.6, fontSize: 11, color: C.sub, lineSpacingMultiple: 1.1 });
+  // 2. 預貸率
+  const x2 = X0 + cw + 0.25;
+  box(s, x2, y, cw, 3.15, C.grey);
+  T(s, "貸出の機会が増えた", { x: x2 + 0.2, y: y + 0.12, w: cw - 0.4, h: 0.35, fontSize: 15, bold: true });
+  s.addChart(pres.charts.BAR, [{ name: "前年同期", labels: ["全国銀行", "地方銀行"], values: [60.6, 73.9] }, { name: "2026年1〜3月期", labels: ["全国銀行", "地方銀行"], values: [62.6, 75.8] }],
+    { x: x2 + 0.1, y: y + 0.5, w: cw - 0.2, h: 2.0, barDir: "col", barGrouping: "clustered", chartColors: ["BBBBBB", C.blueMid], barGapWidthPct: 50,
+      showValue: true, dataLabelPosition: "outEnd", dataLabelFontSize: 9, dataLabelFontFace: F, dataLabelColor: C.ink, dataLabelFormatCode: "0.0",
+      catAxisLabelFontSize: 9.5, catAxisLabelFontFace: F, catAxisLabelColor: C.sub, valAxisHidden: true, valAxisMinVal: 0, valAxisMaxVal: 90, valGridLine: { style: "none" }, catGridLine: { style: "none" },
+      showLegend: true, legendPos: "b", legendFontSize: 8.5, legendFontFace: F });
+  T(s, "預貸率は 2023 年頃を底に上昇。ただし、機会を捉えられる銀行とそうでない銀行の差が広がる", { x: x2 + 0.2, y: y + 2.5, w: cw - 0.4, h: 0.6, fontSize: 11, color: C.sub, lineSpacingMultiple: 1.1 });
+  // 3. 地場企業の承継
+  const x3 = X0 + 2 * (cw + 0.25);
+  box(s, x3, y, cw, 3.15, C.amberSoft);
+  T(s, "一方、地場企業は承継に不安", { x: x3 + 0.2, y: y + 0.12, w: cw - 0.4, h: 0.35, fontSize: 15, bold: true, color: C.amber });
+  [["50.1%", "全国企業の後継者不在率（2025年）"], ["約 3 割", "代表者が 70 代でも後継者が不在"], ["最長 10 年", "承継の準備に必要とされる期間"]].forEach(([b, l], i) => {
+    const yy = y + 0.6 + i * 0.82;
+    T(s, b, { x: x3 + 0.2, y: yy, w: 1.75, h: 0.6, fontSize: 22, bold: true, color: C.amber, valign: "middle" });
+    T(s, l, { x: x3 + 1.95, y: yy, w: cw - 2.1, h: 0.6, fontSize: 11.5, valign: "middle", lineSpacingMultiple: 1.1 });
+  });
+  box(s, X0, 5.8, CW, 0.9, C.blueMid);
+  T(s, [{ text: "差を生むのは、既存顧客との関係の深さ。", options: { fontSize: 16, bold: true, color: C.white, breakLine: true } },
+    { text: "関係が浅いと他行に乗り換えられる。中でも、関係が途切れたときに失うものが最も大きいのが事業承継（最初のテーマ）", options: { fontSize: 12.5, color: C.white } }],
+    { x: X0 + 0.25, y: 5.8, w: CW - 0.5, h: 0.9, valign: "middle", lineSpacingMultiple: 1.1 });
+  caption(s, "出典：日本経済新聞・大和総研（政策金利）、日本総研（預貸率・地方銀行の環境）、帝国データバンク・MS コンパス（後継者不在）");
+  s.addNotes("外部環境です。日銀の利上げで政策金利は1.00%になり、預金に金利がつく時代に戻りました。預貸率も2023年頃を底に上がり、貸出の機会は増えています。ただし、その機会を捉えられる銀行とそうでない銀行の差が広がっています。差を生むのは、既存のお客さまとの関係の深さです。浅いと他行に乗り換えられます。一方で地場企業は、後継者不在が約半数、70代でも3割が不在と、承継に不安を抱えています。関係が途切れたときに失うものが最も大きいのが事業承継なので、ここを最初のテーマにしました。");
+}
+
+// ============ 内部環境（7 分版だけ：前段 5〜7 枚目を 1 枚に） ============
+if (SHORT) {
+  const s = pres.addSlide();
+  head(s, "内部環境：知見が、担当者個人にとどまっている", "承継の課題に取り組める人は限られ、定期異動のたびに知見が失われる。その結果、支援の機会を見落とす", "内部環境");
+  const fl = [["気づきの発生", "雑談や表情から、担当者が違和感に気づく"], ["記録のばらつき", "残すかどうかも、粒度も担当者次第"], ["記憶への依存", "記録されない気づきは、頭の中にだけ残る"]];
+  const fw = (CW - 0.9) / 3;
+  fl.forEach(([t, d], i) => {
+    const x = X0 + i * (fw + 0.45);
+    card(s, x, 2.45, fw, 1.05, t, d, { fill: C.grey, ts: 14, bs: 11.5, kicker: String(i + 1), ks: 11 });
+    if (i < 2) arrow(s, x + fw + 0.06, 2.97, 0.33);
+  });
+  const lw = 7.0;
+  T(s, "担当者任せが生むリスク", { x: X0, y: 3.75, w: lw, h: 0.35, fontSize: 14, bold: true, color: C.red });
+  const rk = [["承継に取り組める人が限られる", "経験のある人は一部。本部に相談が来るのは、事態が表に出てから"], ["異動・退職で知見が消える", "後継者問題や経営の違和感が、引き継がれずに消える"],
+    ["担当者ごとにばらつく", "同じ地域でも、顧客理解の深さが経験年数や関心で変わる"], ["関係が途切れる", "担当が替わるたびに、顧客との関係がゼロから始まる"]];
+  rk.forEach(([t, d], i) => {
+    const yy = 4.15 + i * 0.58;
+    box(s, X0, yy, 0.08, 0.5, C.red);
+    T(s, [{ text: t + "　", options: { fontSize: 13, bold: true } }, { text: d, options: { fontSize: 11.5, color: C.sub } }], { x: X0 + 0.2, y: yy, w: lw - 0.2, h: 0.5, valign: "middle" });
+  });
+  const rx = X0 + lw + 0.3, rw = CW - lw - 0.3;
+  box(s, rx, 3.75, rw, 2.75, C.redSoft);
+  T(s, [{ text: "結果：支援機会の見落とし", options: { fontSize: 15, bold: true, color: C.red, breakLine: true } }, { text: " ", options: { fontSize: 6, breakLine: true } },
+    { text: "支援すべきタイミングを逃す", options: { bullet: true, breakLine: true } }, { text: "同じ質問をお客さまに繰り返し、信頼を損なう", options: { bullet: true, breakLine: true } },
+    { text: "担当交代のたびに、関係が後退する", options: { bullet: true, breakLine: true } }, { text: " ", options: { fontSize: 6, breakLine: true } },
+    { text: "環境は変わったのに、組織の情報の持ち方は変わっていない", options: { fontSize: 12, bold: true } }],
+    { x: rx + 0.2, y: 3.85, w: rw - 0.4, h: 2.55, fontSize: 12.5, paraSpaceAfter: 4, lineSpacingMultiple: 1.1 });
+  caption(s, "しかし、こうした何気ないやり取りの中に、お客さまとの関係を深める宝が眠っている");
+  s.addNotes("内部環境です。担当者は面談の中で違和感に気づきますが、記録に残すかは人次第で、多くは担当者の記憶にしか残りません。その結果、承継に取り組める人は一部に限られ、異動や退職で知見が消え、担当が替わるたびに関係がゼロから始まります。支援すべきタイミングを逃し、同じ質問を繰り返して信頼を損なう。環境は変わったのに、組織の情報の持ち方は変わっていません。");
 }
 
 // ============ 区切り ============
@@ -85,8 +194,12 @@ function table(s, rows, o) {
 // ============ 3 つの条件への答え ============
 {
   const s = pres.addSlide();
-  head(s, "3 つの条件に、ツムグはこう応える", "前段の「残る・引き継がれる・つながる」を、新しい入力を増やさずに満たす", "システム");
-  const cols = [
+  head(s, "3 つの条件に、ツムグはこう応える", S("前段の「残る・引き継がれる・つながる」を、新しい入力を増やさずに満たす", "属人化を解くには、気づきが「残る・引き継がれる・つながる」ことが要る。それぞれに応える機能"), "システム");
+  const cols = SHORT ? [
+    ["残る", "いつもの日報の気づきが、そのまま残る", "新しい入力欄はつくらない。書く補助：音声で入力・AI で整える・下書き保存", "日報（訪問後）の画面"],
+    ["引き継がれる", "前任者たちの記録を、訪問前に読める", "これまでの予兆と根拠／次の世代につなぎたいもの／会話のヒント／担当期間ごとの面談メモ", "取引先（訪問前）の画面"],
+    ["つながる", "記録が重なったときだけ、予兆として知らせる", "① 判定 ② 次にすること ③ 相談する ④ 参考にする（社内事例・現場の知恵・制度）", "日報を登録したときの反応"],
+  ] : [
     ["残る", "いつもの日報に書かれた気づきが、そのまま残る", "新しい入力欄はつくらない。音声で入力・AI で整える・下書き保存で、書く手間を減らす", "日報（訪問後）の画面"],
     ["引き継がれる", "前任者たちの記録を、訪問前にまとめて読める", "担当期間ごとの面談メモ、これまでに出てきた予兆と根拠。相談すると、相談相手もその企業の記録を読める", "取引先（訪問前）の画面"],
     ["つながる", "記録が重なったときだけ、予兆として知らせる", "相談できる人（前任者・似た事例の担当者）、社内の支援事例、公的な制度につなぐ", "日報を登録したときの反応"],
@@ -97,11 +210,12 @@ function table(s, rows, o) {
     box(s, x, 2.55, cw, 0.75, C.blueSoft);
     T(s, cond, { x: x + 0.2, y: 2.55, w: cw - 0.4, h: 0.75, fontSize: 20, bold: true, color: C.blue, valign: "middle" });
     T(s, "▼", { x, y: 3.32, w: cw, h: 0.3, fontSize: 12, color: C.sub, align: "center" });
-    box(s, x, 3.65, cw, 2.35, C.white, { line: C.line });
-    T(s, [{ text: ans, options: { fontSize: 16, bold: true, breakLine: true } }, { text: " ", options: { fontSize: 6, breakLine: true } }, { text: det, options: { fontSize: 13, color: C.sub } }],
-      { x: x + 0.2, y: 3.8, w: cw - 0.4, h: 1.65, lineSpacingMultiple: 1.2 });
-    T(s, where, { x: x + 0.2, y: 5.55, w: cw - 0.4, h: 0.35, fontSize: 11, bold: true, color: C.green });
+    box(s, x, 3.65, cw, S(2.35, 2.15), C.white, { line: C.line });
+    T(s, [{ text: ans, options: { fontSize: S(16, 15), bold: true, breakLine: true } }, { text: " ", options: { fontSize: 6, breakLine: true } }, { text: det, options: { fontSize: S(13, 12), color: C.sub } }],
+      { x: x + 0.2, y: 3.78, w: cw - 0.4, h: S(1.65, 1.6), lineSpacingMultiple: S(1.2, 1.12) });
+    T(s, where, { x: x + 0.2, y: S(5.55, 5.42), w: cw - 0.4, h: 0.35, fontSize: 11, bold: true, color: C.green });
   });
+  if (SHORT) T(s, "支店長は「対話の状況」を点数ではなく段階で、本部は受けた相談と「くり返し出ている話」を見る", { x: X0, y: 5.86, w: CW, h: 0.3, fontSize: 12, color: C.ink });
   box(s, X0, 6.2, CW, 0.62, C.amberSoft);
   T(s, "最終判断は常に担当者・支店長が行う。点数化せず、与信・人事評価には使わない", { x: X0 + 0.25, y: 6.2, w: CW - 0.5, h: 0.62, fontSize: 15, bold: true, color: C.amber, valign: "middle" });
   s.addNotes("前段の3つの条件への答えです。残る：新しい欄はつくらず、いつもの日報を読む。書く手間は音声入力などで減らす。引き継がれる：前任者の記録を訪問前にまとめて読める。つながる：記録が重なったときだけ知らせ、人と事例につなぐ。判断は人が行い、与信や評価には使いません。");
@@ -184,6 +298,67 @@ function table(s, rows, o) {
   s.addNotes("技術は講義で扱ったものが中心です。日報がクエリになり、AIが過去の記録・事例・人を集めて読み、予兆とアドバイスを書きます。ただし知らせるかどうかの線引きは、現場の知見を訳したルールで決めます。公開中のデモはキーを入れていないので、AIの部分は模擬です。");
 }
 
+// ============ システムの全体構成（アーキテクチャ） ============
+{
+  const s = pres.addSlide();
+  head(s, "システムの全体構成（アーキテクチャ）", "SFA の画面の中にツムグの表示領域を置き、日報 1 件ごとに処理して反応を返す。融資・人事のシステムとはつながない", "システム");
+  const LX = X0, LW = 8.95, LBL = 1.05;            // 本体の列（左に段の名前）
+  const CX = LX + LBL, CWW = LW - LBL;
+  function tier(y, h, name, sub, fill) {
+    box(s, LX, y, LW, h, fill);
+    T(s, [{ text: name, options: { fontSize: 13, bold: true, breakLine: true } }, { text: sub, options: { fontSize: 9, color: C.sub } }], { x: LX + 0.12, y: y + 0.08, w: LBL - 0.1, h: h - 0.1, lineSpacingMultiple: 1.05 });
+  }
+  function chips(y, h, items, o = {}) {
+    const g = 0.08, w = (CWW - 0.15 - g * (items.length - 1)) / items.length;
+    items.forEach((it, i) => { const x = CX + i * (w + g); box(s, x, y, w, h, C.white, { line: o.line || C.line, dash: o.dash });
+      const [t, d] = Array.isArray(it) ? it : [it, ""];
+      T(s, d ? [{ text: t, options: { fontSize: o.ts || 10.5, bold: true, breakLine: true } }, { text: d, options: { fontSize: o.ds || 8.5, color: C.sub } }] : t,
+        { x: x + 0.06, y, w: w - 0.12, h, fontSize: o.ts || 10.5, bold: !d, align: "center", valign: "middle", lineSpacingMultiple: 1.0 }); });
+  }
+  function down(y) { s.addShape(pres.shapes.LINE, { x: LX + 0.5, y, w: 0, h: 0.2, line: { color: C.sub, width: 1.5, beginArrowType: "triangle", endArrowType: "triangle" } }); }
+  // 使う人
+  tier(2.4, 0.55, "使う人", "", C.white);
+  chips(2.46, 0.43, ["法人担当者（担当先）", "支店長（自支店）", "本部 事業承継支援室（相談を受けた企業）"], { ts: 10.5 });
+  down(2.97);
+  // 画面
+  tier(3.19, 0.82, "画面", "SFA の中", C.grey);
+  chips(3.25, 0.7, [["取引先（訪問前）", "予兆と根拠・会話のヒント"], ["日報（訪問後）", "音声入力・下書き → 反応"], ["対話の状況", "支店長・段階で"], ["本部", "相談・くり返し出る話"], ["評価・監査", "アンケート・ログ"]]);
+  down(4.03);
+  // 処理
+  tier(4.25, 1.38, "処理", "tsumugu.py\n判定基準は\nrules.json", C.blueSoft);
+  const pw1 = CWW * 0.62, pw2 = CWW - 0.15 - pw1 - 0.08;
+  box(s, CX, 4.31, pw1, 1.26, C.white, { line: C.blue });
+  T(s, [{ text: "反応層（日報 1 件ごと）", options: { fontSize: 10.5, bold: true, color: C.blue, breakLine: true } },
+    { text: "② 抽出 → ③ 照合 → ④ 判定 → ⑤ 検索 → ⑥ 人軸 → ⑦ 次の一手", options: { fontSize: 10.5, bold: true, breakLine: true } },
+    { text: "辞書＋LLM ／ pandas ／ 現場の知見を訳したルール ／ TF-IDF ／ 担当履歴・相談記録 ／ LLM（無ければ定型文）", options: { fontSize: 8.5, color: C.sub } }],
+    { x: CX + 0.1, y: 4.36, w: pw1 - 0.2, h: 1.16, lineSpacingMultiple: 1.15 });
+  const kx = CX + pw1 + 0.08;
+  box(s, kx, 4.31, pw2, 1.26, C.white, { line: C.blue });
+  T(s, [{ text: "ナレッジ層（日報とは別に回す）", options: { fontSize: 10.5, bold: true, color: C.blue, breakLine: true } },
+    { text: "⓪ 収集 crawler.py → 貯める → 索引 ranking.py（TF-IDF）", options: { fontSize: 10, breakLine: true } },
+    { text: "訪問前のまとめ・入力補助も同じ処理から", options: { fontSize: 8.5, color: C.sub } }],
+    { x: kx + 0.1, y: 4.36, w: pw2 - 0.2, h: 1.16, lineSpacingMultiple: 1.15 });
+  down(5.65);
+  // データ
+  tier(5.87, 0.95, "データ", "SQLite\n1 ファイル", C.amberSoft);
+  chips(5.93, 0.83, [["行内データ", "企業・行員・担当履歴・相談"], ["日報", "日報・予兆タグ・下書き"], ["ナレッジ", "社内事例・現場の知恵・公的情報"], ["判定と反応", "判定・候補タグ・アンケート"], ["監査ログ", "誰が・いつ・何を見たか"]]);
+  // 右：外とのつながり
+  const RX = LX + LW + 0.45, RW = X0 + CW - RX;
+  const ext = [
+    [2.4, 1.62, "つながない", "融資・格付け・人事評価のシステム。判定の結果を流さず、記録を評価に使わない", C.redSoft, C.red, false, null],
+    [4.25, 0.64, "公的なサイト（9 ページ）", "中小機構・国税庁を ⓪ 収集", C.white, C.blue, false, 4.57],
+    [4.99, 0.64, "LLM（任意・OpenAI）", "抽出・理由文・助言。無ければ模擬", C.greenSoft, C.green, true, 5.31],
+    [5.87, 0.95, "合成データ（架空）", "最初に取り込む（10 社・日報 79 件）", C.white, C.amber, false, 6.34],
+  ];
+  ext.forEach(([y, h, t, d, f, col, dash, ay]) => {
+    box(s, RX, y, RW, h, f, { line: col, dash, lw: 1.25 });
+    T(s, [{ text: t, options: { fontSize: 11, bold: true, color: col, breakLine: true } }, { text: d, options: { fontSize: 9.5, color: C.ink } }], { x: RX + 0.1, y: y + 0.06, w: RW - 0.2, h: h - 0.1, lineSpacingMultiple: 1.1 });
+    if (ay) s.addShape(pres.shapes.LINE, { x: LX + LW + 0.04, y: ay, w: 0.37, h: 0, line: { color: col, width: 1.5, beginArrowType: "triangle", dashType: dash ? "dash" : "solid" } });
+  });
+  caption(s, "公開：GitHub（非公開リポジトリ）→ Streamlit Community Cloud。認証は SFA、見える範囲（認可）はツムグが役割で決める");
+  s.addNotes("全体の構成です。担当者・支店長・本部は、SFAの画面の中のツムグの表示領域を使います。パイロットではStreamlitで模擬しています。日報を登録すると、処理の反応層が抽出から次の一手までを順に行います。日報とは別に、ナレッジ層が公的サイトを集め、TF-IDFの索引を作ります。データはSQLiteの1ファイルで、行内データ・日報・ナレッジ・判定・監査ログを持ちます。外とのつながりは、公的サイト、任意のLLM、最初に取り込む合成データの3つ。融資・格付け・人事評価のシステムとはつなぎません。");
+}
+
 // ============ 予兆の判断のしかた ============
 {
   const s = pres.addSlide();
@@ -228,8 +403,10 @@ function table(s, rows, o) {
   const px = X0 + 3.8, pw = 4.6;
   box(s, px, y, pw, h, C.blueSoft);
   T(s, "処理", { x: px + 0.2, y: y + 0.1, w: 2, h: 0.3, fontSize: 12, bold: true, color: C.blue });
-  [["①", "登録", "二重登録を除く"], ["②", "抽出", "予兆の言い回し。伝聞は「未確認」"], ["③", "照合", "過去 36 か月をいつ・誰が・何回"], ["④", "判定", "3 種以上の重なり＋直近 12 か月"],
-    ["⑤", "検索", "TF-IDF で事例・知恵・制度"], ["⑥", "人軸", "前任者・似た事例の担当者"], ["⑦", "次の一手", "会話のヒントと行内の準備"]].forEach(([n, t, d], i) => {
+  (SHORT ? [["①", "登録", "SQLite に保存。二重登録を除く"], ["②", "抽出", "辞書＋LLM。伝聞は「未確認」"], ["③", "照合", "pandas で過去 36 か月を並べる"], ["④", "判定", "現場の知見を訳したルール"],
+    ["⑤", "検索", "TF-IDF で事例・知恵・制度"], ["⑥", "人軸", "担当履歴・相談記録から"], ["⑦", "次の一手", "LLM（無ければ定型文）"]] :
+   [["①", "登録", "二重登録を除く"], ["②", "抽出", "予兆の言い回し。伝聞は「未確認」"], ["③", "照合", "過去 36 か月をいつ・誰が・何回"], ["④", "判定", "3 種以上の重なり＋直近 12 か月"],
+    ["⑤", "検索", "TF-IDF で事例・知恵・制度"], ["⑥", "人軸", "前任者・似た事例の担当者"], ["⑦", "次の一手", "会話のヒントと行内の準備"]]).forEach(([n, t, d], i) => {
     const yy = y + 0.42 + i * 0.36;
     T(s, n, { x: px + 0.2, y: yy, w: 0.35, h: 0.34, fontSize: 13, bold: true, color: C.blue, valign: "middle" });
     T(s, t, { x: px + 0.55, y: yy, w: 1.15, h: 0.34, fontSize: 13, bold: true, valign: "middle" });
@@ -245,9 +422,11 @@ function table(s, rows, o) {
     { text: "④ 参考にする", options: { fontSize: 14, bold: true, breakLine: true } }, { text: "社内の支援事例・現場の知恵・制度", options: { fontSize: 11.5, color: C.sub } }],
     { x: ox + 0.2, y: y + 0.1, w: ow - 0.4, h: h - 0.15, lineSpacingMultiple: 1.05 });
   T(s, "入力されたデータはどこへ行くか", { x: X0, y: 5.6, w: 6, h: 0.35, fontSize: 14, bold: true, color: C.amber });
-  const dest = [["日報", "次に誰かが開いたときの材料になる"], ["判定", "支店長の「対話の状況」になる"], ["相談", "相談相手がその企業の記録を読める"], ["すべての操作", "監査ログに残る"]];
+  const dest = S([["日報", "次に誰かが開いたときの材料になる"], ["判定", "支店長の「対話の状況」になる"], ["相談", "相談相手がその企業の記録を読める"], ["すべての操作", "監査ログに残る"]],
+    [["日報", "次に開く人の材料に"], ["判定", "支店長の「対話の状況」に"], ["相談", "相談相手も記録を読める"], ["すべての操作", "監査ログに残る"]]);
   const dw = (CW - 0.45) / 4;
   dest.forEach(([k, v], i) => card(s, X0 + i * (dw + 0.15), 6.0, dw, 0.82, k, v, { fill: C.amberSoft, ts: 13, bs: 11.5 }));
+  if (SHORT) caption(s, "画面：Streamlit（SFA を模擬）／ 収集：requests＋BeautifulSoup（公的サイト）／ 公開：GitHub＋Streamlit Community Cloud ／ 与信には流さない");
   s.addNotes("入力はいつもの日報1件。登録すると、抽出・照合・判定・検索・人軸・次の一手の順に処理し、4つのまとまりで返します。データの行き先も決めています。日報は次に開く人の材料に、相談すると相手が記録を読めるようになり、すべての操作は監査ログに残ります。与信には流しません。");
 }
 
@@ -290,13 +469,41 @@ function table(s, rows, o) {
   s.addNotes("いちばん大きな変化は入力です。最初は日報とは別に一言や気づき欄を書いてもらう案でした。でも追加の入力は使われない。合成データを見直すと、予兆のもとは業務報告に書かれる事実でした。だから欄をなくしました。もう一つ、判定の当てはめ方も変えました。企画書ではLLMがベテランの言葉を毎回読んで判断する形でしたが、言葉を条件に訳し、知らせるかどうかはプログラムが決める形にしました。毎回同じ答えが出て根拠を示せるからです。変えなかったのは、予兆の判断に現場の知見を使うこと。経緯は変更記録に残しています。");
 }
 
+// ============ 貸し続けられる環境を、自ら作る（別案だけ） ============
+if (ALT) {
+  const s = pres.addSlide();
+  head(s, "貸し続けられる環境を、自ら作る", "事業の継続を意識した営業を、いつもの日報から文化にする", "効果・投資");
+  const y = 2.5, h = 2.35, w = 5.4;
+  box(s, X0, y, w, h, C.grey);
+  T(s, [{ text: "融資するか、しないかを判断するだけの銀行", options: { fontSize: 16, bold: true, color: C.sub, breakLine: true } }, { text: " ", options: { fontSize: 6, breakLine: true } },
+    { text: "業績が悪くなってから気づく", options: { bullet: true, breakLine: true } }, { text: "打てる手が少なく、貸すか引き上げるかの二択になる", options: { bullet: true, breakLine: true } },
+    { text: "取引が先細り、関係も浅いまま", options: { bullet: true } }], { x: X0 + 0.25, y: y + 0.2, w: w - 0.5, h: h - 0.3, fontSize: 14, paraSpaceAfter: 8 });
+  arrow(s, X0 + w + 0.15, y + h / 2, CW - 2 * w - 0.3);
+  const rx = X0 + CW - w;
+  box(s, rx, y, w, h, C.blueSoft);
+  T(s, [{ text: "支援して、貸し続けられる状態を作る銀行", options: { fontSize: 16, bold: true, color: C.blue, breakLine: true } }, { text: " ", options: { fontSize: 6, breakLine: true } },
+    { text: "日報の小さな変化から、早く気づく", options: { bullet: true, breakLine: true } }, { text: "承継・成長・相続の支援で、打てる手を増やす", options: { bullet: true, breakLine: true } },
+    { text: "企業が続き、貸出も続く。お金だけではない信頼ができる", options: { bullet: true } }], { x: rx + 0.25, y: y + 0.2, w: w - 0.5, h: h - 0.3, fontSize: 14, paraSpaceAfter: 8 });
+  if (SHORT) {
+    const cw4 = (CW - 0.45) / 4;
+    [["担当者", "経験が浅くても、ベテランの知見を借りて動ける"], ["支店長", "支援の対話の進み具合が段階でわかる"], ["本部", "経営者が誰にも相談していない段階で相談が来る"], ["銀行", "企業が続き貸出が続く。支援は手数料にもなる"]]
+      .forEach(([t, d], i) => card(s, X0 + i * (cw4 + 0.15), 5.05, cw4, 1.2, t, d, { fill: C.greenSoft, tc: C.green, ts: 14, bs: 12, bc: C.ink, kicker: "立場ごとの効果", kc: C.green, ks: 9.5 }));
+  } else {
+  const cw = (CW - 0.4) / 3;
+  [["承継に取り組める人が増える", "経験の浅い担当者も、ベテランの知見を借りて動ける"], ["情報が自然に貯まる", "いつもの営業活動が、そのまま企業が続くための記録になる"], ["示唆が育つ", "その日の日報がクエリとなり、貯まった記録から確かな示唆が返る"]]
+    .forEach(([t, d], i) => card(s, X0 + i * (cw + 0.2), 5.05, cw, 1.2, t, d, { fill: C.greenSoft, tc: C.green, ts: 14, bs: 12, bc: C.ink }));
+  }
+  caption(s, "ツムグの情報は融資の判断には使わない。使うのは、企業が続くよう支援するため");
+  s.addNotes("銀行は金利で収益を上げる。でも、融資するかしないかを判断するだけでは先細ります。かといって、収益の悪い企業に貸し続けることはできない。だからこそ、支援して貸し続けられる状態を自ら作る。ツムグがあれば、経験の浅い担当者もベテランの知見を借りて動け、いつもの営業活動が企業が続くための記録になり、示唆が育ちます。なお、ツムグの情報は融資の判断には使いません。");
+}
+
 // ============ 期待される効果（前段の 3 つ＋立場ごと） ============
 {
   const s = pres.addSlide();
   head(s, "導入によって期待される効果", "担当者が先に得をし、その記録から、支店・本部・銀行の効果が生まれる", "効果・投資");
-  const top = [["関係の継続性", "担当者が変わっても、顧客との関係の積み重ねが途切れない"], ["支援機会の早期発見", "複数の記録をつなぐことで、個人では気づきにくい予兆に気づける"], ["担当者の負担軽減", "着任時から過去の経緯を把握でき、一から関係を築き直す負担が減る"]];
-  const tw = (CW - 0.5) / 3;
-  top.forEach(([t, d], i) => card(s, X0 + i * (tw + 0.25), 2.45, tw, 1.3, t, d, { fill: C.greenSoft, tc: C.green, ts: 18, bs: 13, bc: C.ink }));
+  const top = ALT ? [["承継に取り組める人が増える", "経験の浅い担当者も、ベテランの知見を借りて支援できる"], ["関係の継続性", "担当者が変わっても、顧客との関係の積み重ねが途切れない"], ["支援機会の早期発見", "複数の記録をつなぎ、個人では気づきにくい予兆に気づける"], ["担当者の負担軽減", "着任時から過去の経緯がわかり、築き直す負担が減る"]] : [["関係の継続性", "担当者が変わっても、顧客との関係の積み重ねが途切れない"], ["支援機会の早期発見", "複数の記録をつなぐことで、個人では気づきにくい予兆に気づける"], ["担当者の負担軽減", "着任時から過去の経緯を把握でき、一から関係を築き直す負担が減る"]];
+  const tw = (CW - 0.25 * (top.length - 1)) / top.length;
+  top.forEach(([t, d], i) => card(s, X0 + i * (tw + 0.25), 2.45, tw, 1.3, t, d, { fill: C.greenSoft, tc: C.green, ts: ALT ? 13 : 18, bs: ALT ? 12 : 13, bc: C.ink }));
   T(s, "立場ごとに見ると", { x: X0, y: 3.95, w: 5, h: 0.35, fontSize: 14, bold: true, color: C.sub });
   const cols = [["担当者", ["訪問前に過去の経緯がわかる", "何を聞けばよいかのヒント", "誰に聞けばよいかがわかる"]], ["支店長", ["支援の対話の進み具合が段階でわかる", "部下への声かけの材料", "異動の引継ぎで途切れない"]],
     ["本部", ["経営者が誰にも相談していない段階で相談が来る", "新しい予兆に気づける", "ベテランの判断を組織の資産に"]], ["銀行", ["守り：乗り換え・廃業を防ぎ取引を維持", "攻め：承継・M&A・付随融資の案件", "眠っていた日報を活かす"]]];
@@ -315,7 +522,7 @@ function table(s, rows, o) {
 // ============ ROI ============
 {
   const s = pres.addSlide();
-  head(s, "守りの ROI と攻めの ROI", "守り＝取引の乗り換え・消失を防ぐ。攻め＝増えた貸出機会を案件に変える。投資の意味は攻めにある", "効果・投資");
+  head(s, "守りの ROI と攻めの ROI", V("守り＝取引の乗り換え・消失を防ぐ。攻め＝増えた貸出機会を案件に変える。投資の意味は攻めにある", "企業が続くことが収益になる。守り＝貸出が続く・乗り換えを防ぐ。攻め＝承継・相続などの支援が案件と手数料になる"), "効果・投資");
   s.addChart(pres.charts.BAR, [
     { name: "効果", labels: ["1 年目", "2 年目", "3 年目"], values: [3495, 8155, 11650] },
     { name: "費用", labels: ["1 年目", "2 年目", "3 年目"], values: [3500, 700, 700] },
@@ -407,14 +614,15 @@ function table(s, rows, o) {
 // ============ 結論 ============
 {
   const s = pres.addSlide();
-  head(s, "関係の深さを、組織の資産にする", "金利のある世界で差になる関係の深さを、いつもの日報から積み上げる。その第一歩として、1 支店・事業承継のパイロットを承認してください", "結論");
-  const pts = [["新しい入力はつくらない", "いつもの日報だけを読む"], ["現場の知見で判断する", "AI は読む・探す・書くを担う"], ["与信・評価には使わない", "だから記録が集まる"]];
+  head(s, V("関係の深さを、組織の資産にする", "貸し続けられる環境を、自ら作る"), V("金利のある世界で差になる関係の深さを、いつもの日報から積み上げる。その第一歩として、1 支店・事業承継のパイロットを承認してください", "企業が続けば、雇用と技術が守られ、銀行は貸出を続けられる。その第一歩として、1 支店・事業承継のパイロットを承認してください"), "結論");
+  const pts = ALT ? [["承継に取り組める人を増やす", "ベテランの知見を LLM で届ける"], ["手間は増やさない", "いつもの日報だけを読む"], ["与信・評価には使わない", "企業が続くよう支援するために使う"]] : [["新しい入力はつくらない", "いつもの日報だけを読む"], ["現場の知見で判断する", "AI は読む・探す・書くを担う"], ["与信・評価には使わない", "だから記録が集まる"]];
   const cw = (CW - 0.6) / 3;
   pts.forEach(([t, d], i) => card(s, X0 + i * (cw + 0.3), 2.85, cw, 1.4, t, d, { fill: C.blueSoft, ts: 18, bs: 14 }));
   box(s, X0, 4.65, CW, 1.0, C.blueMid);
   T(s, "数字が悪くなってからでは、遅い。一人の担当者の気づきを、地域を支える銀行の力に変える。", { x: X0 + 0.3, y: 4.65, w: CW - 0.6, h: 1.0, fontSize: 19, bold: true, color: C.white, valign: "middle" });
   T(s, "ご質問をお待ちしています", { x: X0, y: 6.0, w: 6, h: 0.4, fontSize: 14, bold: true });
-  s.addNotes("関係の深さを、組織の資産にする。新しい入力をつくらず、現場の知見で判断し、与信・評価には使わない。その第一歩としてパイロットの承認をお願いします。");
+  if (ALT) s.addNotes("貸し続けられる環境を、自ら作る。承継に取り組める人を増やし、手間は増やさず、与信・評価には使わない。企業が続けば、雇用と技術が守られ、銀行は貸出を続けられる。その第一歩としてパイロットの承認をお願いします。");
+  else s.addNotes("関係の深さを、組織の資産にする。新しい入力をつくらず、現場の知見で判断し、与信・評価には使わない。その第一歩としてパイロットの承認をお願いします。");
 }
 
 // ============ 付録 ============
