@@ -283,3 +283,50 @@ def test_several_technologies_with_holder():
     assert names == ["特殊薄板加工", "手作業による薄板加工の勘"]                    # 「薄板加工、今期も安定」は同じ技術なので重ねない
     kan = tech["entries"][1]
     assert kan["holder"] == "斎藤工場長" and kan["unconfirmed"] and kan["by"] == "llm-sim" and "林" in kan["source"]
+
+
+# ── 面談の記録の取り込み（変更記録 CH-48） ─────────────────────────────
+SAMPLE = ROOT / "docs" / "meeting_samples" / "C001_カナイ精工_2026-09-15_定例訪問.txt"
+
+
+def test_intake_sorts_sensitive_sentences_into_three_treatments():
+    """機微情報は日報から外し、中身によって扱いを分ける：入院＝残さない／譲る＝本部へ直接／体調＝担当者が判断"""
+    import tsumugu
+    r = tsumugu.intake(SAMPLE.read_text(encoding="utf-8"), "C001", ["佐々木"], use_llm=False)
+    got = {x["treatment"]: x["text"] for x in r["sensitive"]}
+    assert "入院" in got["drop"] and "譲る" in got["route_hq"] and "疲れやす" in got["ask"]
+    for x in r["sensitive"]:
+        assert x["text"] not in r["report"]                                          # 外した文は日報の案に入らない
+    assert "手術" not in r["report"] and "譲る" not in r["report"]
+
+
+def test_intake_keeps_hearsay_and_does_not_summarize():
+    """要約しない：伝聞の言い回し（らしい・雑談）を残し、型に入らない文も捨てない。外した文は一覧に出す"""
+    import tsumugu
+    r = tsumugu.intake(SAMPLE.read_text(encoding="utf-8"), "C001", ["佐々木"], use_llm=False)
+    assert r["by"] == "llm-sim"                                                      # デモのサンプル → 用意した整理結果
+    assert "らしい" in r["report"] and "雑談" in r["report"]
+    assert r["report"].startswith("【面談の目的・相手】") and "【注意すること】" in r["report"]
+    assert not r["shrink_warn"] and r["dropped"] == []                               # あいさつ以外はどこかに残っている
+    rule = tsumugu.intake("受注は前年並み。工場の裏で猫を見かけた。", "C004", use_llm=False)
+    assert rule["by"] == "rule" and "猫" in rule["sections"]["その他"][0]               # どの項目にも入らない文は「その他」に残す
+
+
+def test_vtt_transcript_is_read_with_speakers():
+    """Zoom・Teams の文字起こし（vtt）を「話者：発言」として読み、時刻の行は捨てる"""
+    import tsumugu
+    text = tsumugu.read_transcript("a.vtt", SAMPLE.with_suffix(".vtt").read_bytes())
+    assert "-->" not in text and "WEBVTT" not in text
+    units = tsumugu.split_units(text, ["佐々木"])
+    assert units[0]["speaker"] == "佐々木" and units[0]["staff"]
+    assert any(u["speaker"] == "金井社長" and not u["staff"] for u in units)
+
+
+def test_intake_report_still_raises_the_signal():
+    """整えた日報をそのまま登録しても、デモ②と同じく予兆が立つ（伝聞は未確認の印のまま）"""
+    import tsumugu
+    r = tsumugu.intake(SAMPLE.read_text(encoding="utf-8"), "C001", ["佐々木"], use_llm=False)
+    res = tsumugu.run(tsumugu.new_post("C001", "C001-P1", "E001", "2026-09-15", r["report"]), use_llm=False, persist=False)
+    assert res["signal"]["fired"] and res["signal"]["reaction"] == 4
+    hearsay = [t for t in res["extraction"]["formal"] if t.get("origin") == "hearsay"]
+    assert hearsay and "工場長" in hearsay[0]["evidence"]
