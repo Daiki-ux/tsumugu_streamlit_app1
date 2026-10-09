@@ -330,3 +330,16 @@ def test_intake_report_still_raises_the_signal():
     assert res["signal"]["fired"] and res["signal"]["reaction"] == 4
     hearsay = [t for t in res["extraction"]["formal"] if t.get("origin") == "hearsay"]
     assert hearsay and "工場長" in hearsay[0]["evidence"]
+
+
+def test_intake_turns_spoken_words_into_written_style_and_removes_tags():
+    """話し言葉は報告の書き言葉に整える（要約ではない）。<v> などのタグや時刻の行は、どの入口から来ても残さない"""
+    import tsumugu
+    raw = ("<v 金井社長>えーと、受注はね、前年並みかな。</v>\n00:00:01.000 --> 00:00:02.000\n"
+           "<v 佐々木>帰り際の雑談で、工場長が来春で退職を考えてるらしいって聞きました。</v>")
+    r = tsumugu.intake(raw, "C004", ["佐々木"], use_llm=False)
+    assert "<" not in r["report"] and "-->" not in r["report"]
+    assert "受注は、前年並み。" in r["report"] and "かな" not in r["report"] and "えーと" not in r["report"]
+    assert "考えているらしいと聞いた。" in r["report"]                                 # 伝聞の言い回しは残す
+    assert tsumugu._tidy_sentence("決算の説明を受けました。") == "決算の説明を受けた。"
+    assert tsumugu._tidy_sentence("息子は継がないって言ってるしね。") == "息子は継がないと言っている。"

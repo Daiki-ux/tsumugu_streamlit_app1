@@ -202,16 +202,7 @@ def meeting_samples(company_id):
 
 def parse_vtt(text):
     """Zoom・Teams の文字起こし（WebVTT）→「話者：発言」の行"""
-    out = []
-    for line in text.splitlines():
-        s = line.strip()
-        if not s or s == "WEBVTT" or s.isdigit() or "-->" in s or s.startswith(("NOTE", "STYLE", "REGION")):
-            continue
-        m = re.match(r"<v\s+([^>]+)>(.*?)(?:</v>)?$", s)
-        if m:
-            s = f"{m.group(1).strip()}：{m.group(2).strip()}"
-        out.append(re.sub(r"<[^>]+>", "", s))
-    return "\n".join(out)
+    return "\n".join(x for x in (_clean_line(line) for line in text.splitlines()) if x)
 
 
 def read_transcript(name, data):
@@ -222,20 +213,65 @@ def read_transcript(name, data):
     return text.strip()
 
 
+# 話し言葉 → 報告の書き言葉（だ・である調）。文体を整えるだけで、事実や伝聞の言い回し（らしい・雑談で）は変えない
+SPOKEN_HEAD = [(r"^(?:えーっと|えーと|えー|あのー|あの|まあ|なんか|で)[、,]?", ""), (r"^(?:それとね|それと|あとね|あと)、", "また、"),
+               (r"^(?:実はね)、", "実は、")]
+SPOKEN = [(r"(?<![ぁ-ん])(?:えーっと|えーと|あのー)[、,]?", ""), (r"ちょっと", "少し"), (r"って(?=(聞|言|話|思))", "と"),
+          (r"っていう", "という"), (r"って(?=[、。])", "と"), (r"てる(?=[。、らとのなよんしけ])", "ている"),
+          (r"てない", "ていない"), (r"じゃない", "ではない"), (r"(?:んだ|んです)けど、", "が、"), (r"けど、", "が、"),
+          (r"だね(?=[、])", "で"), (r"ね、", "、")]
+ENDINGS = [("てるんだよ", "ている"), ("ているんだよ", "ている"), ("んですよね", ""), ("んですよ", ""), ("んだよね", ""), ("んだよ", ""),
+           ("んです", ""), ("んだ", ""), ("だよね", ""), ("だよ", ""), ("だね", ""), ("よね", ""), ("かな", ""), ("しね", ""),
+           ("でした", "だった"), ("ません", "ない"), ("いたします", "する"), ("します", "する"), ("伺います", "伺う"),
+           ("思います", "思う"), ("あります", "ある"), ("います", "いる"), ("です", ""), ("ね", ""), ("よ", ""), ("な", "")]
+
+
+# 「〜ました」は動詞で形が変わるので、よく使う動詞だけ直す。それ以外は丁寧語のまま残す（誤った形にしない）
+PAST = {"聞きました": "聞いた", "お聞きしました": "お聞きした", "伺いました": "伺った", "言いました": "言った", "思いました": "思った",
+        "行きました": "行った", "いただきました": "いただいた", "なりました": "なった", "ありました": "あった", "もらいました": "もらった",
+        "話しました": "話した", "確認しました": "確認した", "しました": "した", "できました": "できた", "来ました": "来た", "いました": "いた"}
+
+
+def _past(body):
+    for old, new in sorted(PAST.items(), key=lambda kv: -len(kv[0])):
+        if body.endswith(old):
+            return body[: -len(old)] + new
+    return re.sub(r"([えけげせてねべめれ])ました$", r"\1た", body)        # 決めました → 決めた（一段の動詞）
+
+
 def _tidy_sentence(s):
-    s = FILLERS.sub("", s.strip())
-    s = re.sub(r"って(?=(聞|言|話))", "と", s)
-    s = re.sub(r"っていう", "という", s)
-    s = re.sub(r"てる(?=[。、らとのなよんし])", "ている", s)
-    s = re.sub(r"\s+", "", s)
-    return s if s.endswith(("。", "！", "？", "」")) else s + "。"
+    s = re.sub(r"\s+", "", (s or "").strip())
+    for pat, rp in SPOKEN_HEAD + SPOKEN:
+        s = re.sub(pat, rp, s)
+    s = FILLERS.sub("", s)
+    body, end = (s[:-1], s[-1]) if s.endswith(("。", "！", "？")) else (s, "。")
+    if not body.endswith("」"):
+        body = _past(body)
+        for _ in range(2):                                  # 「〜んだよね」のように重なる語尾は 2 回まで外す
+            for old, new in ENDINGS:
+                if body.endswith(old) and len(body) > len(old) + 1:
+                    body = body[: -len(old)] + new
+                    break
+    return body.rstrip("、") + ("。" if end in "！？" else end) if not body.endswith("」") else body
+
+
+def _clean_line(line):
+    """どの入口から来た行も、文字起こしの書式（WebVTT の時刻・番号、<v 名前> などのタグ）を外す"""
+    s = line.strip()
+    if not s or s == "WEBVTT" or "-->" in s or re.fullmatch(r"\d+", s) or s.startswith(("NOTE", "STYLE", "REGION")):
+        return ""
+    m = re.match(r"<v\s+([^>]+)>(.*)$", s)
+    if m:
+        s = f"{m.group(1).strip()}：{m.group(2)}"
+    return re.sub(r"<[^>]*>", "", s).strip()
 
 
 def split_units(text, staff_names=()):
-    """書き起こし → 文の単位 [{i, speaker, staff, text}]。行頭の「名前：」を話者として読む"""
+    """書き起こし → 文の単位 [{i, speaker, staff, raw, text}]。行頭の「名前：」を話者として読む。
+    text は報告の書き言葉に整えた文、raw は元の話し言葉（あいさつ・相づちの判定に使う）"""
     units = []
     for line in (text or "").splitlines():
-        line = line.strip()
+        line = _clean_line(line)
         if not line:
             continue
         m = SPEAKER.match(line)
@@ -243,12 +279,12 @@ def split_units(text, staff_names=()):
         staff = (not speaker) or "メモ" in speaker or "担当" in speaker or any(n and n in speaker for n in staff_names)
         for sent in re.findall(r"[^。！？]+[。！？]?", body):
             if sent.strip(" 、"):
-                units.append({"i": len(units), "speaker": speaker, "staff": staff, "text": _tidy_sentence(sent)})
+                units.append({"i": len(units), "speaker": speaker, "staff": staff, "raw": sent.strip(), "text": _tidy_sentence(sent)})
     return units
 
 
 def _skip(u):
-    return any(re.search(p, u["text"]) for p in TEMPLATE.get("skip_patterns", []))
+    return any(re.search(p, u.get("raw", u["text"])) for p in TEMPLATE.get("skip_patterns", []))
 
 
 def screen_sensitive(units, use_llm=True):
@@ -300,7 +336,8 @@ def _section_of(u):
 def _structure_llm(cands):
     names = TEMPLATE.get("order", [])
     system = ("地方銀行の法人担当者の面談記録を、日報の項目に並べ替える。要約はしない。原文の文をできるだけそのまま使い、"
-              "話し言葉を報告の文（だ・である調、体言止め可）に直す程度にとどめる。削ってよいのは言いよどみ・重複だけ。"
+              "話し言葉は報告の書き言葉（だ・である調、体言止め可）に直す（「〜ね」「〜よ」「〜かな」「えーと」などは外す）。文体を整えるのは要約ではない。"
+              "削ってよいのは言いよどみ・重複だけ。"
               "「らしい」「雑談で」などの伝聞の言い回しは必ず残す。書かれていない事実は足さない。お客さまの大事な発言は「」で引用のまま残す。"
               f"項目は {'・'.join(names)} のどれか。どれにも入らない文は「その他」に入れ、捨てない。"
               '出力は JSON のみ: {"sections":[{"name":"<項目>","items":[{"text":"<文>","from":[<元の番号>]}]}]}')
@@ -335,14 +372,18 @@ def format_report(sections):
     return "\n".join(f"【{n}】" + "".join(sections[n]) for n in order if sections.get(n))
 
 
-def intake(text, company_id=None, staff_names=(), use_llm=True):
+def intake(text, company_id=None, staff_names=(), use_llm=True, progress=None):
     """面談の記録（書き起こし・手書き）→ 日報の型に整えた案と、確認してほしいもの（変更記録 CH-48）
     返す dict のキー: by（llm | llm-sim | rule）, sections{項目: [文]}, report, sensitive[], dropped[{i, text}],
-      ratio（整えた本文 ÷ 元の本文の文字数）, shrink_warn"""
+      ratio（整えた本文 ÷ 元の本文の文字数）, shrink_warn
+    progress(段階) を渡すと、段階ごとに呼ぶ（画面に処理中の段階を出すため。sensitive → structure）"""
+    step = progress or (lambda name: None)
     units = split_units(text, staff_names)
     if not units:
         return None
+    step("sensitive")
     sensitive = screen_sensitive(units, use_llm=use_llm)
+    step("structure")
     flagged = {s["i"] for s in sensitive}
     cands = [u for u in units if u["i"] not in flagged and not _skip(u)]
     by, secs, used = "rule", None, None
@@ -1071,24 +1112,32 @@ def recommend(signal, knowledge, people, use_llm=True):
 
 
 # ── run：①〜⑦ を順に ─────────────────────────────────────────
-def run(post, use_llm=True, persist=True):
+def run(post, use_llm=True, persist=True, progress=None):
     """記録 1 件 → 全工程。返す dict のキー: post, extraction, profile, signal, knowledge, people, next_actions, elapsed_sec
-    persist=True なら記録・タグ・判定・監査ログを DB に残す（＝記録が次の誰かの検索対象になる）"""
+    persist=True なら記録・タグ・判定・監査ログを DB に残す（＝記録が次の誰かの検索対象になる）
+    progress(段階) を渡すと、②〜⑦ の各段階の前に呼ぶ（画面に処理中の段階を出すため）"""
+    step = progress or (lambda name: None)
     t0 = time.time()
     if persist:
         db.insert_post(post)
         db.log_audit(post["author_id"], "post", post["company_id"], post["id"])
+    step("extract")
     ext = extract(post, use_llm=use_llm)                                   # ②
     if persist:
         db.replace_post_tags(post["id"], all_tags(ext))
         for c in ext["candidate"]:
             db.bump_candidate_tag(c["tag"], post["posted_at"])
+    step("collate")
     profile = collate(post, ext)                                           # ③
+    step("assess")
     signal = assess(profile, ext, use_llm=use_llm)                         # ④
     if persist:
         db.insert_signal(signal)
+    step("retrieve")
     knowledge = retrieve(profile, signal, post["text"])                    # ⑤
+    step("people")
     people = who_to_ask(knowledge, profile, signal, current_author_id=post["author_id"])   # ⑥
+    step("recommend")
     nxt = recommend(signal, knowledge, people, use_llm=use_llm)            # ⑦
     elapsed = round(time.time() - t0, 2)
     if persist:
