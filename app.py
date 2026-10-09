@@ -21,6 +21,7 @@
 import importlib
 import os
 import re
+import time
 from datetime import date
 from html import escape
 
@@ -647,7 +648,6 @@ st.session_state.setdefault("rp_text", "")
 
 with st.sidebar:
     st.title("🧵 ツムグ")
-    st.warning("個人の習作です（議論のたたき台）。チームで決まった仕様ではありません", icon="✏️")
     st.caption("Salesforce（SFA）の画面の中に置く表示領域を模したものです。灰色の帯が SFA、点線から下がツムグの領域です")
     ids = [s["id"] for s in staff]
     st.selectbox("ログイン中の行員（SFA のログインを模擬）", ids, key="me", on_change=on_me_change,
@@ -865,20 +865,69 @@ def _consented(company_id):
     return False
 
 
-def _run_intake(company_id, text, source):
-    staff_names = [x["name"].split()[0] for x in staff]
-    res = tsumugu.intake(text, company_id, staff_names)
-    if not res:
-        st.session_state["flash_warn"] = "取り込んだ記録に文がありませんでした"
-        return
+# ── 処理中の表示（変更記録 CH-51） ─────────────────────────────────────
+#   ボタンや取り込みのコールバックでは「仕事」を積むだけにし、画面の本文で段階ごとの表示を出しながら処理する。
+#   AI のキーが無い（模擬の）ときは、流れが見えるように各段階を少し待たせ、模擬であることを明記する
+SIM_STEP_SEC = 0.45
+INTAKE_STEPS = {"transcribe": "🎧 音声を文字に起こしています", "sensitive": "🔒 機微な情報が含まれていないか確かめています",
+                "structure": "🗂 日報の型に並べ替え、書き言葉に整えています"}
+RUN_STEPS = {"extract": "② 日報から、予兆に当たる文を拾っています", "collate": "③ この会社の過去 3 年の記録・担当の移り変わりと照らし合わせています",
+             "assess": "④ 現場の知見を訳したルールで、知らせるかどうかを判定しています",
+             "retrieve": "⑤ 社内の支援事例・現場の知恵・公的な制度を探しています", "people": "⑥ 相談できる人を探しています",
+             "recommend": "⑦ 次にすること（会話のヒント・行内での準備）をまとめています"}
+
+
+def _stepper(status, labels):
+    """tsumugu の progress(段階) を受けて、st.status に段階を足していく"""
+    sim = not tsumugu.llm_available()
+
+    def step(name):
+        if name in labels:
+            status.update(label=labels[name] + ("…（このデモでは AI を模擬）" if sim else "…"), expanded=True)
+            status.write("✓ " + labels[name])
+            if sim:
+                time.sleep(SIM_STEP_SEC)
+    return step
+
+
+def _queue_intake(company_id, source, text=None, audio=None, filename=None):
+    st.session_state["intake_job"] = {"company_id": company_id, "source": source, "text": text, "audio": audio, "filename": filename}
+
+
+def process_intake_job(company_id):
+    """積まれた取り込みの仕事を、段階を表示しながら処理する。処理したら True"""
+    job = st.session_state.get("intake_job")
+    if not job or job["company_id"] != company_id:
+        return False
+    st.session_state.pop("intake_job", None)
+    with st.status("AI が処理しています…", expanded=True) as status:
+        step = _stepper(status, INTAKE_STEPS)
+        text = job["text"]
+        if job["audio"] is not None:
+            step("transcribe")
+            res = tsumugu.transcribe(job["audio"], company_id, filename=job["filename"] or "voice.wav", meeting=job["source"] == "audio")
+            if not res:
+                status.update(label="文字起こしできませんでした", state="error")
+                st.session_state["flash_warn"] = ("このデモでは、文字起こしはカナイ精工など一部の取引先だけ模擬しています。"
+                                                  "AI（OpenAI）のキーを設定すると、実際に文字起こしします")
+                return True
+            text = res["text"]
+        res = tsumugu.intake(text, company_id, [x["name"].split()[0] for x in staff], progress=step)
+        if not res:
+            status.update(label="取り込んだ記録に文がありませんでした", state="error")
+            st.session_state["flash_warn"] = "取り込んだ記録に文がありませんでした"
+            return True
+        status.update(label=f"日報の型に整えました（{BY_LABEL[res['by']]}）", state="complete", expanded=False)
     for x in res["sensitive"]:
         x["decided"] = None
-    st.session_state["intake"] = {"company_id": company_id, "source": source, **res}
+    st.session_state["intake"] = {"company_id": company_id, "source": job["source"], **res}
+    st.session_state["intake_toast"] = job["source"] != "manual"
     kinds = {}
     for x in res["sensitive"]:
         kinds[x["treatment"]] = kinds.get(x["treatment"], 0) + 1
     # 監査ログには「機微情報の印が付いた」事実だけを残し、中身は残さない
-    db.log_audit(me, "intake", company_id, f"source={source} by={res['by']} sensitive={kinds or 0} dropped={len(res['dropped'])}")
+    db.log_audit(me, "intake", company_id, f"source={job['source']} by={res['by']} sensitive={kinds or 0} dropped={len(res['dropped'])}")
+    return True
 
 
 def on_record(company_id):
@@ -886,13 +935,8 @@ def on_record(company_id):
     audio = st.session_state.get(key)
     if not audio or not _consented(company_id):
         return
-    res = tsumugu.transcribe(audio.getvalue(), company_id)
     st.session_state["audio_n"] = st.session_state.get("audio_n", 0) + 1       # 録音欄を空に戻す
-    if not res:
-        st.session_state["flash_warn"] = ("このデモでは、録音の文字起こしはカナイ精工・太田電装・ヤマト化成だけ模擬しています。"
-                                          "AI（OpenAI）のキーを設定すると、どの取引先でも実際に文字起こしします")
-        return
-    _run_intake(company_id, res["text"], "rec")
+    _queue_intake(company_id, "rec", audio=audio.getvalue())
 
 
 def on_audio_file(company_id):
@@ -905,12 +949,7 @@ def on_audio_file(company_id):
         st.session_state["flash_warn"] = (f"ファイルが大きすぎます（{f.size / 1024 / 1024:.0f}MB）。{tsumugu.AUDIO_LIMIT_MB}MB までです。"
                                           "Zoom・Teams の録画なら、音声だけのファイル（m4a）か、文字起こしのファイル（vtt）を使ってください")
         return
-    res = tsumugu.transcribe(f.getvalue(), company_id, filename=f.name, meeting=True)
-    if not res:
-        st.session_state["flash_warn"] = ("このデモでは、ファイルの文字起こしはカナイ精工だけ模擬しています。"
-                                          "AI（OpenAI）のキーを設定すると、実際に文字起こしします")
-        return
-    _run_intake(company_id, res["text"], "audio")
+    _queue_intake(company_id, "audio", audio=f.getvalue(), filename=f.name)
 
 
 def on_text_file(company_id):
@@ -919,11 +958,11 @@ def on_text_file(company_id):
     if not f:
         return
     st.session_state["tfile_n"] = st.session_state.get("tfile_n", 0) + 1
-    _run_intake(company_id, tsumugu.read_transcript(f.name, f.getvalue()), "text")
+    _queue_intake(company_id, "text", text=tsumugu.read_transcript(f.name, f.getvalue()))
 
 
 def on_sample(company_id, path):
-    _run_intake(company_id, path.read_text(encoding="utf-8"), "sample")
+    _queue_intake(company_id, "sample", text=path.read_text(encoding="utf-8"))
 
 
 def on_tidy(company_id):
@@ -932,7 +971,7 @@ def on_tidy(company_id):
     if not text:
         st.session_state["flash_warn"] = "業務報告が空です。先に書くか、📥 から取り込んでください"
         return
-    _run_intake(company_id, text, "manual")
+    _queue_intake(company_id, "manual", text=text)
 
 
 def _intake_add(section, text):
@@ -987,7 +1026,7 @@ def intake_panel(company_id):
                        for n in tsumugu.TEMPLATE.get("order", []) if it["sections"].get(n))
         st.markdown(f"<div class='hint'><div class='hint-h'><span class='hint-t'>日報の型に整えた案</span><span class='hint-tag'>✨ AI のヒント</span></div>"
                     f"<div class='hint-n'>{escape(SOURCE_LABEL.get(it['source'], ''))} から。{escape(BY_LABEL[it['by']])}。"
-                    f"要約はしていません。元の文を項目に並べ替えています。業務報告に入れるかはあなたが決めます</div>{body}</div>",
+                    f"要約はしていません。元の文を項目に並べ替え、話し言葉を報告の書き言葉に整えています。業務報告に入れるかはあなたが決めます</div>{body}</div>",
                     unsafe_allow_html=True)
         if it["shrink_warn"]:
             st.warning(f"元の記録より大幅に短くなっています（約 {int(it['ratio'] * 100)}%）。下の「外した文」を確かめてください")
@@ -1034,24 +1073,76 @@ def on_save_draft(company_id):
 
 
 def register(company_id):
-    """SFA に登録 → 裏でツムグが ②〜⑦ を走らせる。入力欄は空に戻す"""
+    """SFA に登録 → 裏でツムグが ②〜⑦ を走らせる。ここでは仕事を積んで入力欄を空にするだけ（処理は process_register_job で、段階を表示しながら）"""
     text = st.session_state.get("rp_text", "").strip()
     if not text:
         st.session_state["flash_warn"] = "業務報告を入力してください"
         return
-    day = st.session_state["rp_date"].isoformat()
-    same = db.find_same_post(company_id, me, day, text)
-    if same:                                   # 二度押し・登録し直し：新しく記録せず、登録済みの日報への反応をもう一度見せる
-        post = tsumugu.new_post(company_id, st.session_state.get(f"rp_contact_{company_id}"), me, day, text,
-                                post_id=same, activity=st.session_state.get("rp_activity"))
-        st.session_state["result"] = {**tsumugu.run(post, persist=False), "duplicate": True}
-    else:
-        post = tsumugu.new_post(company_id, st.session_state.get(f"rp_contact_{company_id}"), me, day, text,
-                                activity=st.session_state.get("rp_activity"))
-        st.session_state["result"] = tsumugu.run(post)
+    st.session_state["register_job"] = {"company_id": company_id, "text": text, "day": st.session_state["rp_date"].isoformat(),
+                                        "contact": st.session_state.get(f"rp_contact_{company_id}"),
+                                        "activity": st.session_state.get("rp_activity")}
     db.delete_draft(company_id, me)
     st.session_state["rp_text"] = ""
     st.session_state.pop("intake", None)
+
+
+def process_register_job(company_id):
+    job = st.session_state.get("register_job")
+    if not job or job["company_id"] != company_id:
+        return
+    st.session_state.pop("register_job", None)
+    with st.status("SFA に登録しました。ツムグが反応を準備しています…", expanded=True) as status:
+        step = _stepper(status, RUN_STEPS)
+        same = db.find_same_post(company_id, me, job["day"], job["text"])
+        if same:                               # 二度押し・登録し直し：新しく記録せず、登録済みの日報への反応をもう一度見せる
+            post = tsumugu.new_post(company_id, job["contact"], me, job["day"], job["text"], post_id=same, activity=job["activity"])
+            st.session_state["result"] = {**tsumugu.run(post, persist=False, progress=step), "duplicate": True}
+        else:
+            post = tsumugu.new_post(company_id, job["contact"], me, job["day"], job["text"], activity=job["activity"])
+            st.session_state["result"] = tsumugu.run(post, progress=step)
+        status.update(label="反応を準備しました（下に表示しています）", state="complete", expanded=False)
+
+
+@st.dialog("📥 面談の記録を取り込む", width="large")
+def intake_dialog(company_id):
+    """取り込みは画面中央の小窓で行い、取り込めたら閉じて、すぐ下の整理案を見せる（ポップアップは開いたままで結果に重なるため）"""
+    if process_intake_job(company_id):                  # 取り込みを、段階を表示しながら処理して
+        if st.session_state.get("intake"):
+            st.rerun()                                  # 小窓を閉じて、すぐ下の整理案を見せる
+    if st.session_state.get("flash_warn"):
+        st.warning(st.session_state.pop("flash_warn"))
+    st.caption("録音・ファイル・文字起こしを取り込み、日報の型に整えた案を出します。録音ファイルと書き起こしの全文は保存しません")
+    st.checkbox("お客さまの了承を得て、録音・記録しています", key=f"consent_{company_id}")
+    ok = st.session_state.get(f"consent_{company_id}", False)
+    t1, t2, t3, t4 = st.tabs(["🎤 録音", "🎞 音声・動画", "📄 テキスト", "🧪 サンプル"])
+    need = "<div class='rec-need'>☝️ 上の「お客さまの了承を得て、録音・記録しています」にチェックを入れると使えます</div>"
+    with t1:
+        if not ok:
+            st.markdown(need, unsafe_allow_html=True)
+        else:
+            st.markdown("<div class='rec-steps'><b>① 赤いマイクのボタンを押す</b>と録音が始まります　"
+                        "<b>② 話し終えたら、もう一度押して</b>止めます　"
+                        "<b>③</b> 止めると文字に起こし、日報の型に整えた案を出します</div>", unsafe_allow_html=True)
+            with st.container(key="rec_box"):
+                st.audio_input("録音", key=f"rp_audio_{company_id}_{st.session_state.get('audio_n', 0)}",
+                               on_change=on_record, args=(company_id,), label_visibility="collapsed")
+    with t2:
+        st.caption(f"Zoom・Teams などの録音・録画（{'・'.join(tsumugu.AUDIO_TYPES)}、{tsumugu.AUDIO_LIMIT_MB}MB まで）")
+        if not ok:
+            st.markdown(need, unsafe_allow_html=True)
+        else:
+            st.file_uploader("音声・動画ファイル", type=tsumugu.AUDIO_TYPES, label_visibility="collapsed",
+                             key=f"rp_file_{company_id}_{st.session_state.get('file_n', 0)}", on_change=on_audio_file, args=(company_id,))
+    with t3:
+        st.caption("文字起こしのファイル（txt・md、Zoom・Teams の vtt）")
+        st.file_uploader("テキスト", type=tsumugu.TEXT_TYPES, label_visibility="collapsed",
+                         key=f"rp_tfile_{company_id}_{st.session_state.get('tfile_n', 0)}", on_change=on_text_file, args=(company_id,))
+    with t4:
+        samples = tsumugu.meeting_samples(company_id)
+        st.caption("デモ用に用意した面談の書き起こし（架空）です" if samples else "この取引先のサンプルはありません（カナイ精工にあります）")
+        for pth in samples:
+            st.button(f"{pth.suffix[1:]}：{pth.stem.split('_', 1)[1]}", key=f"smp_{pth.name}", on_click=on_sample,
+                      args=(company_id, pth), width="stretch")
 
 
 def page_report():
@@ -1083,47 +1174,21 @@ def page_report():
                      placeholder="例：定例訪問。受注状況を確認。前年並みとのこと。設備更新の件はその後進展なし。")
         # 入力の補助：📥 取り込む／✨ AI で整える／💾 下書き保存（変更記録 CH-44・CH-48）
         b1, b2, b3, _ = st.columns([1.5, 1.2, 1.1, 1.2], gap="small")
-        with b1.popover("📥 面談の記録を取り込む", width="stretch"):
-            st.caption("録音・ファイル・文字起こしを取り込み、日報の型に整えた案を出します。録音ファイルと書き起こしの全文は保存しません")
-            st.checkbox("お客さまの了承を得て、録音・記録しています", key=f"consent_{company_id}")
-            ok = st.session_state.get(f"consent_{company_id}", False)
-            t1, t2, t3, t4 = st.tabs(["🎤 録音", "🎞 音声・動画", "📄 テキスト", "🧪 サンプル"])
-            need = "<div class='rec-need'>☝️ 上の「お客さまの了承を得て、録音・記録しています」にチェックを入れると使えます</div>"
-            with t1:
-                if not ok:
-                    st.markdown(need, unsafe_allow_html=True)
-                else:
-                    st.markdown("<div class='rec-steps'><b>① 赤いマイクのボタンを押す</b>と録音が始まります　"
-                                "<b>② 話し終えたら、もう一度押して</b>止めます　"
-                                "<b>③</b> 止めると文字に起こし、日報の型に整えた案を出します</div>", unsafe_allow_html=True)
-                    with st.container(key="rec_box"):
-                        st.audio_input("録音", key=f"rp_audio_{company_id}_{st.session_state.get('audio_n', 0)}",
-                                       on_change=on_record, args=(company_id,), label_visibility="collapsed")
-            with t2:
-                st.caption(f"Zoom・Teams などの録音・録画（{'・'.join(tsumugu.AUDIO_TYPES)}、{tsumugu.AUDIO_LIMIT_MB}MB まで）")
-                if not ok:
-                    st.markdown(need, unsafe_allow_html=True)
-                else:
-                    st.file_uploader("音声・動画ファイル", type=tsumugu.AUDIO_TYPES, label_visibility="collapsed",
-                                     key=f"rp_file_{company_id}_{st.session_state.get('file_n', 0)}", on_change=on_audio_file, args=(company_id,))
-            with t3:
-                st.caption("文字起こしのファイル（txt・md、Zoom・Teams の vtt）")
-                st.file_uploader("テキスト", type=tsumugu.TEXT_TYPES, label_visibility="collapsed",
-                                 key=f"rp_tfile_{company_id}_{st.session_state.get('tfile_n', 0)}", on_change=on_text_file, args=(company_id,))
-            with t4:
-                samples = tsumugu.meeting_samples(company_id)
-                st.caption("デモ用に用意した面談の書き起こし（架空）です" if samples else "この取引先のサンプルはありません（カナイ精工にあります）")
-                for pth in samples:
-                    st.button(f"{pth.suffix[1:]}：{pth.stem.split('_', 1)[1]}", key=f"smp_{pth.name}", on_click=on_sample,
-                              args=(company_id, pth), width="stretch")
+        if b1.button("📥 面談の記録を取り込む", width="stretch", help="録音・音声や動画のファイル・文字起こしを取り込みます"):
+            intake_dialog(company_id)
         b2.button("✨ AI で整える", on_click=on_tidy, args=(company_id,), width="stretch",
                   help="書いた業務報告を、日報の型に整えた案を出します。要約はしません。置き換えるかはあなたが決めます")
         b3.button("💾 下書き保存", on_click=on_save_draft, args=(company_id,), width="stretch")
+        if process_intake_job(company_id):              # ✨ AI で整える（書いた業務報告）
+            st.rerun()
+        if st.session_state.pop("intake_toast", False):
+            st.toast("取り込みました。すぐ下の「日報の型に整えた案」を確認してください", icon="📥")
         intake_panel(company_id)
         for k, fn in (("flash_warn", st.warning), ("flash_info", st.info)):
             if st.session_state.get(k):
                 fn(st.session_state.pop(k))
         st.button("SFA に登録する", type="primary", on_click=register, args=(company_id,))
+    process_register_job(company_id)
     r = st.session_state.get("result")
     if r and r["post"]["company_id"] == company_id:
         if r.get("duplicate"):
