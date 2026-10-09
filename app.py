@@ -912,16 +912,18 @@ def process_intake_job(company_id):
                                                   "AI（OpenAI）のキーを設定すると、実際に文字起こしします")
                 return True
             text = res["text"]
-        res = tsumugu.intake(text, company_id, [x["name"].split()[0] for x in staff], progress=step)
+        res = tsumugu.intake(text, company_id, [x["name"].split()[0] for x in staff], progress=step, keep_ask=job["source"] == "manual")
         if not res:
             status.update(label="取り込んだ記録に文がありませんでした", state="error")
             st.session_state["flash_warn"] = "取り込んだ記録に文がありませんでした"
             return True
         status.update(label=f"日報の型に整えました（{BY_LABEL[res['by']]}）", state="complete", expanded=False)
+    if job["source"] == "manual" and res["report"] == (text or "").strip() and not res["sensitive"] and not res["dropped"]:
+        st.session_state["flash_info"] = "すでに日報の型に整っています。変える所はありませんでした"
+        return True
     for x in res["sensitive"]:
         x["decided"] = None
     st.session_state["intake"] = {"company_id": company_id, "source": job["source"], **res}
-    st.session_state["intake_toast"] = job["source"] != "manual"
     kinds = {}
     for x in res["sensitive"]:
         kinds[x["treatment"]] = kinds.get(x["treatment"], 0) + 1
@@ -965,15 +967,6 @@ def on_sample(company_id, path):
     _queue_intake(company_id, "sample", text=path.read_text(encoding="utf-8"))
 
 
-def on_tidy(company_id):
-    """✨ AI で整える：書いた業務報告も、取り込みと同じ流れで日報の型に整えた案を出す。置き換えるかは担当者が決める"""
-    text = st.session_state.get("rp_text", "").strip()
-    if not text:
-        st.session_state["flash_warn"] = "業務報告が空です。先に書くか、📥 から取り込んでください"
-        return
-    _queue_intake(company_id, "manual", text=text)
-
-
 def _intake_add(section, text):
     it = st.session_state.get("intake")
     if it:
@@ -981,12 +974,26 @@ def _intake_add(section, text):
         it["report"] = tsumugu.format_report(it["sections"])
 
 
-def restore_dropped(i):
+def _intake_remove(section, text):
     it = st.session_state.get("intake")
-    hit = next((d for d in it["dropped"] if d["i"] == i), None) if it else None
-    if hit:
-        it["dropped"].remove(hit)
-        _intake_add("その他", hit["text"])
+    if it and text in it["sections"].get(section, []):
+        it["sections"][section].remove(text)
+        if not it["sections"][section]:
+            del it["sections"][section]
+        it["report"] = tsumugu.format_report(it["sections"])
+
+
+def toggle_dropped(i):
+    """整えるときに外した文を「戻す」⇄「外す」。業務報告に入れるまでは何度でも切り替えられる（変更記録 CH-55）"""
+    it = st.session_state.get("intake")
+    d = next((d for d in it["dropped"] if d["i"] == i), None) if it else None
+    if not d:
+        return
+    if d.get("restored"):
+        _intake_remove("内容", d["text"])
+    else:
+        _intake_add("内容", d["text"])
+    d["restored"] = not d.get("restored")
 
 
 def decide_sensitive(i, decision):
@@ -995,9 +1002,14 @@ def decide_sensitive(i, decision):
     x = next((x for x in it["sensitive"] if x["i"] == i), None) if it else None
     if not x:
         return
+    if x.get("decided") == decision:
+        return
+    if x.get("decided") == "include":                         # 入れていた文を外す（業務報告に入れるまでは切り替えられる。CH-55）
+        _intake_remove("気になる点", x.get("added", ""))
     x["decided"] = decision
     if decision == "include":                                 # お客さまの言葉として、言い回しはそのまま残す
-        _intake_add("気になった変化", f"「{x['text'].rstrip('。')}」との話があった。")
+        x["added"] = f"「{x['text'].rstrip('。')}」との話があった。"
+        _intake_add("気になる点", x["added"])
     if decision == "route":
         hq = tsumugu.SENSITIVE.get("hq_staff", "E007")
         db.insert_consultation(me, hq, it["company_id"], "（日報には残さないご相談）社長から直接伺ったお話について、お時間をいただきたいです",
@@ -1010,11 +1022,13 @@ def apply_intake():
     it = st.session_state.pop("intake", None)
     if it:
         st.session_state["rp_text"] = it["report"]
-        st.session_state["flash_info"] = "整えた案を業務報告に入れました。確認・修正してから登録してください（取り込んだ記録の全文は保存していません）"
+        st.session_state["flash_info"] = "整えた案を業務報告に入れました。細かな修正は、この業務報告の欄で直接どうぞ（取り込んだ記録の全文は保存していません）"
+    st.session_state["intake_close"] = True
 
 
 def close_intake():
     st.session_state.pop("intake", None)
+    st.session_state["intake_close"] = True
 
 
 def intake_panel(company_id):
@@ -1022,7 +1036,7 @@ def intake_panel(company_id):
     if not it or it["company_id"] != company_id:
         return
     with st.container(key="intake_panel"):
-        body = "".join(f"<div class='ir'><b>{escape(n)}</b><span>{escape(''.join(it['sections'][n]))}</span></div>"
+        body = "".join(f"<div class='ir'><b>{escape(n)}</b><span>{'<br>'.join(escape(x) for x in it['sections'][n])}</span></div>"
                        for n in tsumugu.TEMPLATE.get("order", []) if it["sections"].get(n))
         st.markdown(f"<div class='hint'><div class='hint-h'><span class='hint-t'>日報の型に整えた案</span><span class='hint-tag'>✨ AI のヒント</span></div>"
                     f"<div class='hint-n'>{escape(SOURCE_LABEL.get(it['source'], ''))} から。{escape(BY_LABEL[it['by']])}。"
@@ -1045,22 +1059,25 @@ def intake_panel(company_id):
                             st.caption("✅ 本部（事業承継支援室）に相談を送りました。内容は日報にもログにも残していません")
                         else:
                             st.button("本部（事業承継支援室）に直接伝える", key=f"sv_route_{x['i']}", on_click=decide_sensitive, args=(x["i"], "route"))
-                    elif x["treatment"] == "ask":
-                        if x["decided"]:
-                            st.caption("✅ 日報に入れました（「気になった変化」）" if x["decided"] == "include" else "✅ 日報から外しました")
-                        else:
-                            k1, k2, _ = st.columns([1, 1, 3], gap="small")
-                            k1.button("日報に入れる", key=f"sv_in_{x['i']}", on_click=decide_sensitive, args=(x["i"], "include"), width="stretch")
-                            k2.button("外す", key=f"sv_out_{x['i']}", on_click=decide_sensitive, args=(x["i"], "exclude"), width="stretch")
+                    elif x["treatment"] == "ask":                # 業務報告に入れるまでは、何度でも切り替えられる（CH-55）
+                        now = {"include": "今は「日報に入れる」（気になる点）", "exclude": "今は「外す」"}.get(x["decided"], "まだ決めていません（このままなら外します）")
+                        k1, k2, k3 = st.columns([1, 1, 2.2], gap="small", vertical_alignment="center")
+                        k1.button("日報に入れる", key=f"sv_in_{x['i']}", on_click=decide_sensitive, args=(x["i"], "include"), width="stretch",
+                                  type="primary" if x["decided"] == "include" else "secondary")
+                        k2.button("外す", key=f"sv_out_{x['i']}", on_click=decide_sensitive, args=(x["i"], "exclude"), width="stretch",
+                                  type="primary" if x["decided"] == "exclude" else "secondary")
+                        k3.caption(now)
         if it["dropped"]:
-            with st.expander(f"整えるときに外した文（{len(it['dropped'])} 件）— 必要なら戻せます"):
+            back = sum(1 for d in it["dropped"] if d.get("restored"))
+            with st.expander(f"整えるときに外した文（{len(it['dropped'])} 件、うち戻した {back} 件）— 戻す・外すを切り替えられます"):
                 for d in it["dropped"]:
                     d1, d2 = st.columns([5, 1], gap="small", vertical_alignment="center")
-                    d1.caption(d["text"])
-                    d2.button("戻す", key=f"dr_{d['i']}", on_click=restore_dropped, args=(d["i"],), width="stretch")
+                    d1.caption(("↩︎ 戻した（内容）：" if d.get("restored") else "") + d["text"])
+                    d2.button("外す" if d.get("restored") else "戻す", key=f"dr_{d['i']}", on_click=toggle_dropped, args=(d["i"],), width="stretch")
+        st.caption("ここでは確認だけをします。言葉の細かな修正は、入れた後に業務報告の欄で直接できます")
         a1, a2, _ = st.columns([2, 1, 2.5], gap="small")
         a1.button("この内容で業務報告に入れる", on_click=apply_intake, type="primary", width="stretch")
-        a2.button("閉じる", on_click=close_intake, width="stretch")
+        a2.button("入れずに閉じる", on_click=close_intake, width="stretch")
 
 
 def on_save_draft(company_id):
@@ -1103,14 +1120,22 @@ def process_register_job(company_id):
         status.update(label="反応を準備しました（下に表示しています）", state="complete", expanded=False)
 
 
-@st.dialog("📥 面談の記録を取り込む", width="large")
-def intake_dialog(company_id):
-    """取り込みは画面中央の小窓で行い、取り込めたら閉じて、すぐ下の整理案を見せる（ポップアップは開いたままで結果に重なるため）"""
-    if process_intake_job(company_id):                  # 取り込みを、段階を表示しながら処理して
-        if st.session_state.get("intake"):
-            st.rerun()                                  # 小窓を閉じて、すぐ下の整理案を見せる
-    if st.session_state.get("flash_warn"):
-        st.warning(st.session_state.pop("flash_warn"))
+def _intake_dialog_body(company_id, with_inputs):
+    """小窓の中で「取り込む（または整える）→ 確認する → 業務報告に入れる」まで済ませる（変更記録 CH-54）。
+    確認では、整えた案を見る・機微情報の扱いを決める・外した文を戻す、だけをする。言葉の細かな修正は業務報告の欄で行う"""
+    if st.session_state.pop("intake_close", False):
+        st.rerun()                                      # 入れた／閉じた → 小窓を閉じて業務報告の欄に戻る
+    process_intake_job(company_id)                      # 積まれた取り込み・整える仕事を、段階を表示しながら処理する
+    it = st.session_state.get("intake")
+    if it and it["company_id"] == company_id:
+        intake_panel(company_id)
+        return
+    for k, fn in (("flash_warn", st.warning), ("flash_info", st.info)):
+        if st.session_state.get(k):
+            fn(st.session_state.pop(k))
+    if not with_inputs:
+        st.button("閉じる", on_click=close_intake)
+        return
     st.caption("録音・ファイル・文字起こしを取り込み、日報の型に整えた案を出します。録音ファイルと書き起こしの全文は保存しません")
     st.checkbox("お客さまの了承を得て、録音・記録しています", key=f"consent_{company_id}")
     ok = st.session_state.get(f"consent_{company_id}", False)
@@ -1145,6 +1170,16 @@ def intake_dialog(company_id):
                       args=(company_id, pth), width="stretch")
 
 
+
+@st.dialog("📥 面談の記録を取り込む", width="large")
+def intake_dialog(company_id):
+    _intake_dialog_body(company_id, with_inputs=True)
+
+
+@st.dialog("✨ AI で整える", width="large")
+def tidy_dialog(company_id):
+    _intake_dialog_body(company_id, with_inputs=False)
+
 def page_report():
     company_id = company_select("rp_company")
     if not company_id:
@@ -1175,15 +1210,20 @@ def page_report():
         # 入力の補助：📥 取り込む／✨ AI で整える／💾 下書き保存（変更記録 CH-44・CH-48）
         b1, b2, b3, _ = st.columns([1.5, 1.2, 1.1, 1.2], gap="small")
         if b1.button("📥 面談の記録を取り込む", width="stretch", help="録音・音声や動画のファイル・文字起こしを取り込みます"):
+            st.session_state.pop("intake", None)
+            st.session_state.pop("intake_close", None)
             intake_dialog(company_id)
-        b2.button("✨ AI で整える", on_click=on_tidy, args=(company_id,), width="stretch",
-                  help="書いた業務報告を、日報の型に整えた案を出します。要約はしません。置き換えるかはあなたが決めます")
+        if b2.button("✨ AI で整える", width="stretch",
+                     help="書いた業務報告を、日報の型に整えた案にします。要約はしません。入れるかはあなたが決めます"):
+            text = st.session_state.get("rp_text", "").strip()
+            if not text:
+                st.session_state["flash_warn"] = "業務報告が空です。先に書くか、📥 から取り込んでください"
+            else:
+                st.session_state.pop("intake", None)
+                st.session_state.pop("intake_close", None)
+                _queue_intake(company_id, "manual", text=text)
+                tidy_dialog(company_id)
         b3.button("💾 下書き保存", on_click=on_save_draft, args=(company_id,), width="stretch")
-        if process_intake_job(company_id):              # ✨ AI で整える（書いた業務報告）
-            st.rerun()
-        if st.session_state.pop("intake_toast", False):
-            st.toast("取り込みました。すぐ下の「日報の型に整えた案」を確認してください", icon="📥")
-        intake_panel(company_id)
         for k, fn in (("flash_warn", st.warning), ("flash_info", st.info)):
             if st.session_state.get(k):
                 fn(st.session_state.pop(k))

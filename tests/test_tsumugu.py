@@ -309,7 +309,7 @@ def test_intake_keeps_hearsay_and_does_not_summarize():
     assert r["report"].startswith("【面談の目的・相手】") and "【注意すること】" in r["report"]
     assert not r["shrink_warn"] and r["dropped"] == []                               # あいさつ以外はどこかに残っている
     rule = tsumugu.intake("受注は前年並み。工場の裏で猫を見かけた。", "C004", use_llm=False)
-    assert rule["by"] == "rule" and "猫" in rule["sections"]["その他"][0]               # どの項目にも入らない文は「その他」に残す
+    assert rule["by"] == "rule" and "猫" in rule["sections"]["内容"][0]                 # どの項目にも入らない文は「内容」に残す
 
 
 def test_vtt_transcript_is_read_with_speakers():
@@ -343,3 +343,34 @@ def test_intake_turns_spoken_words_into_written_style_and_removes_tags():
     assert "考えているらしいと聞いた。" in r["report"]                                 # 伝聞の言い回しは残す
     assert tsumugu._tidy_sentence("決算の説明を受けました。") == "決算の説明を受けた。"
     assert tsumugu._tidy_sentence("息子は継がないって言ってるしね。") == "息子は継がないと言っている。"
+
+
+def test_retidy_keeps_one_heading_and_the_staff_placement():
+    """整え済みの日報をもう一度整えても、見出しは増えず、結果も変わらない。重なった見出しは 1 つに戻る（変更記録 CH-53）"""
+    import tsumugu
+    once = tsumugu.intake(SAMPLE.read_text(encoding="utf-8"), "C001", ["佐々木"], use_llm=False)["report"]
+    twice = tsumugu.intake(once, "C001", ["佐々木"], use_llm=False)["report"]
+    assert twice == once and twice.count("【面談の目的・相手】") == 1
+    messy = ("【面談の目的・相手】【面談の目的・相手】定例訪問。\n"
+             "【聞いた事実】【聞いた事実】金井社長に受注の状況を伺った。【聞いた事実】受注は前年並み。")
+    fixed = tsumugu.intake(messy, "C001", use_llm=False)["report"]
+    assert fixed == "【面談の目的・相手】定例訪問。\n【内容】金井社長に受注の状況を伺った。受注は前年並み。"        # 以前の見出しは今の項目に読み替える
+
+
+def test_tidying_written_report_does_not_ask_again_for_condition():
+    """担当者が書いた業務報告を整えるときは、体調の変化（担当者が判断する種類）を聞き直さずに残す。病名などは引き続き外す"""
+    import tsumugu
+    text = "【気になった変化】社長は最近は疲れやすいとのこと。\n【聞いた事実】来月、手術で入院する予定。"
+    r = tsumugu.intake(text, "C001", use_llm=False, keep_ask=True)
+    assert "疲れやすい" in r["report"]
+    assert [x["treatment"] for x in r["sensitive"]] == ["drop"] and "入院" not in r["report"]
+
+
+def test_light_template_has_four_items_and_caution_only_when_mentioned():
+    """型にしすぎない：面談の目的・相手／内容／気になる点／次回話したいこと＋話に出たときだけ注意すること（変更記録 CH-56）"""
+    import tsumugu
+    assert tsumugu.TEMPLATE["order"] == ["面談の目的・相手", "内容", "気になる点", "次回話したいこと", "注意すること"]
+    r = tsumugu.intake(SAMPLE.read_text(encoding="utf-8"), "C001", ["佐々木"], use_llm=False)
+    assert r["report"].count("\n") >= 6 and "【注意すること】" in r["report"]          # 内容は話題ごとに段落を分ける
+    plain = tsumugu.intake("定例訪問。受注は前年並み。次回は設備のお考えを伺う。", "C004", use_llm=False)["report"]
+    assert "【注意すること】" not in plain and "【次回話したいこと】" in plain
