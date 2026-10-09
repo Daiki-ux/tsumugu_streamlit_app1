@@ -135,20 +135,25 @@ TRANSCRIBE_MODEL = "gpt-4o-mini-transcribe"
 FILLERS = re.compile(r"(?:(?<=^)|(?<=[。、]))(?:えーっと|えーと|えー|あのー|あの|まあ|なんか|で)[、,]")
 
 
-def transcribe(audio_bytes, company_id, use_llm=True):
-    """①' 🎤 音声 → 文字起こし {"text", "by"}。キーがあれば OpenAI で文字起こし、無ければ docs/voice_samples.json の模擬。
-    どちらも無ければ None（変更記録 CH-44）"""
+def transcribe(audio_bytes, company_id, use_llm=True, filename="voice.wav", meeting=False):
+    """①' 音声（録音・音声／動画ファイル）→ 文字起こし {"text", "by"}。キーがあれば OpenAI で文字起こし、無ければ模擬。
+    模擬は、meeting=True（面談 1 件分のファイル）なら docs/meeting_samples/ の書き起こし、それ以外は docs/voice_samples.json。
+    どちらも無ければ None（変更記録 CH-44・CH-48）"""
     if use_llm and llm_available() and audio_bytes:
         try:
             import io
             from openai import OpenAI
             f = io.BytesIO(audio_bytes)
-            f.name = "voice.wav"
+            f.name = filename
             res = OpenAI(api_key=llm_key()).audio.transcriptions.create(model=TRANSCRIBE_MODEL, file=f, language="ja")
             if (res.text or "").strip():
                 return {"text": res.text.strip(), "by": "llm"}
         except Exception:
             pass
+    if meeting:
+        m = VOICE_SIM.get(company_id, {}).get("meeting")
+        if m and (MEETING_DIR / m["file"]).exists():
+            return {"text": (MEETING_DIR / m["file"]).read_text(encoding="utf-8").strip(), "by": "llm-sim"}
     sim = VOICE_SIM.get(company_id, {}).get("transcript")
     return {"text": sim, "by": "llm-sim"} if sim else None
 
@@ -174,6 +179,196 @@ def tidy_report(text, company_id=None, use_llm=True):
     t = re.sub(r"\s+", "", t)
     t = t if t.endswith(("。", "！", "？")) else t + "。"
     return {"text": t, "by": "rule"}
+
+
+# ── ①'' 面談の記録の取り込み → 日報の型に整える（変更記録 CH-48） ─────────────
+#   録音・音声／動画ファイル・テキスト（txt・md・vtt）のどこから入っても、同じ流れで日報の形にする。
+#   要約はしない：原文の文をそのまま項目に並べ替える。削ってよいのは言いよどみ・あいさつ・機微情報だけ。
+#   機微情報は ① 辞書（rules.json の sensitive）で見つけ、② キーがあれば LLM が言い換えを拾う。最後は担当者が確認する。
+#   録音ファイル・書き起こしの全文は保存しない（日報に入れた文だけが SFA に登録される）
+SENSITIVE = RULES.get("sensitive", {})
+TEMPLATE = RULES.get("report_template", {})
+AUDIO_TYPES = ["mp3", "m4a", "wav", "mp4", "webm", "mpeg", "mpga"]
+TEXT_TYPES = ["txt", "md", "vtt"]
+AUDIO_LIMIT_MB = 25                                  # 文字起こし API に 1 回で送れる大きさ
+MEETING_DIR = BASE_DIR / "docs" / "meeting_samples"
+SPEAKER = re.compile(r"^([^：:「」。、\s]{1,12})[：:]\s*(.+)$")
+
+
+def meeting_samples(company_id):
+    """デモ用の面談の書き起こし（docs/meeting_samples/ の、取引先 ID で始まるファイル）"""
+    return sorted(MEETING_DIR.glob(f"{company_id}_*")) if MEETING_DIR.exists() else []
+
+
+def parse_vtt(text):
+    """Zoom・Teams の文字起こし（WebVTT）→「話者：発言」の行"""
+    out = []
+    for line in text.splitlines():
+        s = line.strip()
+        if not s or s == "WEBVTT" or s.isdigit() or "-->" in s or s.startswith(("NOTE", "STYLE", "REGION")):
+            continue
+        m = re.match(r"<v\s+([^>]+)>(.*?)(?:</v>)?$", s)
+        if m:
+            s = f"{m.group(1).strip()}：{m.group(2).strip()}"
+        out.append(re.sub(r"<[^>]+>", "", s))
+    return "\n".join(out)
+
+
+def read_transcript(name, data):
+    """アップロードされたテキスト（txt・md・vtt）→ 書き起こしの文字列"""
+    text = data.decode("utf-8-sig", errors="replace")
+    if name.lower().endswith(".vtt") or text.lstrip().startswith("WEBVTT"):
+        return parse_vtt(text)
+    return text.strip()
+
+
+def _tidy_sentence(s):
+    s = FILLERS.sub("", s.strip())
+    s = re.sub(r"って(?=(聞|言|話))", "と", s)
+    s = re.sub(r"っていう", "という", s)
+    s = re.sub(r"てる(?=[。、らとのなよんし])", "ている", s)
+    s = re.sub(r"\s+", "", s)
+    return s if s.endswith(("。", "！", "？", "」")) else s + "。"
+
+
+def split_units(text, staff_names=()):
+    """書き起こし → 文の単位 [{i, speaker, staff, text}]。行頭の「名前：」を話者として読む"""
+    units = []
+    for line in (text or "").splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        m = SPEAKER.match(line)
+        speaker, body = (m.group(1), m.group(2)) if m else ("", line)
+        staff = (not speaker) or "メモ" in speaker or "担当" in speaker or any(n and n in speaker for n in staff_names)
+        for sent in re.findall(r"[^。！？]+[。！？]?", body):
+            if sent.strip(" 、"):
+                units.append({"i": len(units), "speaker": speaker, "staff": staff, "text": _tidy_sentence(sent)})
+    return units
+
+
+def _skip(u):
+    return any(re.search(p, u["text"]) for p in TEMPLATE.get("skip_patterns", []))
+
+
+def screen_sensitive(units, use_llm=True):
+    """機微情報を見つける → [{i, text, category, label, treatment, reason, method}]（変更記録 CH-48）
+    ① 辞書で見つけたものは LLM に送らない。② キーがあれば、残りの文を LLM が分類する"""
+    cats = SENSITIVE.get("categories", {})
+    found = {}
+    for u in units:
+        for cid, c in cats.items():
+            hit = next((p for p in c["patterns"] if p in u["text"]), None)
+            if hit:
+                found[u["i"]] = {"i": u["i"], "text": u["text"], "category": cid, "label": c["label"], "treatment": c["treatment"],
+                                 "reason": f"「{hit}」を含む", "method": "rule"}
+                break
+    rest = [u for u in units if u["i"] not in found and not _skip(u)]
+    if use_llm and llm_available() and rest:
+        system = ("銀行の法人担当者の面談記録から、日報に残してはいけない機微情報の文を見つける。出力は JSON のみ: "
+                  '{"flags":[{"i":<番号>,"category":"health|ma|insider|private|condition","reason":"<短い理由>"}]}。'
+                  "health＝具体的な病名・入院・治療、ma＝会社や事業の売却・譲渡・M&A の意向、insider＝上場企業などの未公表情報、"
+                  "private＝家族・私生活の事情、condition＝体調の変化（病名は無い）。当てはまらない文は出力しない。迷う文は condition 以外は出さない")
+        data = llm_chat(system, "\n".join(f"[{u['i']}] {u['text']}" for u in rest), want_json=True) or {}
+        valid = {u["i"]: u for u in rest}
+        for f in data.get("flags", []):
+            if f.get("i") in valid and f.get("category") in cats and f["i"] not in found:
+                c = cats[f["category"]]
+                found[f["i"]] = {"i": f["i"], "text": valid[f["i"]]["text"], "category": f["category"], "label": c["label"],
+                                 "treatment": c["treatment"], "reason": f.get("reason", ""), "method": "llm"}
+    return [found[i] for i in sorted(found)]
+
+
+def _norm(s):
+    return re.sub(r"[、。「」（）\s]", "", s or "")
+
+
+def _covered(sentence, out_text, threshold=0.3):
+    """原文の文が、整えた日報のどこかに（言い回しを変えてでも）残っているか。2 文字ずつの重なりで見る"""
+    a, b = _norm(sentence), _norm(out_text)
+    grams = {a[k:k + 2] for k in range(len(a) - 1)}
+    return not grams or sum(g in b for g in grams) / len(grams) >= threshold
+
+
+def _section_of(u):
+    for sec in TEMPLATE.get("sections", []):
+        if any(p in u["text"] for p in sec["patterns"]):
+            return sec["name"]
+    return "その他"
+
+
+def _structure_llm(cands):
+    names = TEMPLATE.get("order", [])
+    system = ("地方銀行の法人担当者の面談記録を、日報の項目に並べ替える。要約はしない。原文の文をできるだけそのまま使い、"
+              "話し言葉を報告の文（だ・である調、体言止め可）に直す程度にとどめる。削ってよいのは言いよどみ・重複だけ。"
+              "「らしい」「雑談で」などの伝聞の言い回しは必ず残す。書かれていない事実は足さない。お客さまの大事な発言は「」で引用のまま残す。"
+              f"項目は {'・'.join(names)} のどれか。どれにも入らない文は「その他」に入れ、捨てない。"
+              '出力は JSON のみ: {"sections":[{"name":"<項目>","items":[{"text":"<文>","from":[<元の番号>]}]}]}')
+    data = llm_chat(system, "\n".join(f"[{u['i']}]（{'担当者' if u['staff'] else 'お客さま'}）{u['text']}" for u in cands), want_json=True)
+    if not data:
+        return None
+    secs, used = {}, set()
+    for s in data.get("sections", []):
+        if s.get("name") not in names:
+            continue
+        for it in s.get("items", []):
+            if (it.get("text") or "").strip():
+                secs.setdefault(s["name"], []).append(it["text"].strip())
+                used |= {i for i in it.get("from", []) if isinstance(i, int)}
+    return (secs, used) if secs else None
+
+
+def _sample_sections(company_id, text):
+    """デモ用：用意した面談サンプルと同じ記録なら、AI が整えたらこうなる、という結果（docs/voice_samples.json の meeting）"""
+    m = VOICE_SIM.get(company_id or "", {}).get("meeting")
+    if not m:
+        return None
+    src = MEETING_DIR / m["file"]
+    if src.exists() and _norm(src.read_text(encoding="utf-8")) == _norm(text):
+        return m["sections"]
+    return None
+
+
+def format_report(sections):
+    """項目 → 業務報告の文（項目ごとに 1 行、【項目】で始める）"""
+    order = TEMPLATE.get("order", [])
+    return "\n".join(f"【{n}】" + "".join(sections[n]) for n in order if sections.get(n))
+
+
+def intake(text, company_id=None, staff_names=(), use_llm=True):
+    """面談の記録（書き起こし・手書き）→ 日報の型に整えた案と、確認してほしいもの（変更記録 CH-48）
+    返す dict のキー: by（llm | llm-sim | rule）, sections{項目: [文]}, report, sensitive[], dropped[{i, text}],
+      ratio（整えた本文 ÷ 元の本文の文字数）, shrink_warn"""
+    units = split_units(text, staff_names)
+    if not units:
+        return None
+    sensitive = screen_sensitive(units, use_llm=use_llm)
+    flagged = {s["i"] for s in sensitive}
+    cands = [u for u in units if u["i"] not in flagged and not _skip(u)]
+    by, secs, used = "rule", None, None
+    if use_llm and llm_available() and cands:
+        res = _structure_llm(cands)
+        if res:
+            (secs, used), by = res, "llm"
+    if secs is None:
+        sample = _sample_sections(company_id, text)
+        if sample:
+            secs, by = {k: list(v) for k, v in sample.items()}, "llm-sim"
+    if secs is None:
+        secs = {}
+        for u in cands:
+            secs.setdefault(_section_of(u), []).append(u["text"])
+        used = {u["i"] for u in cands}
+    report = format_report(secs)
+    body = "".join("".join(v) for v in secs.values())
+    if used is not None and by == "llm":
+        dropped = [{"i": u["i"], "text": u["text"]} for u in cands if u["i"] not in used and not _covered(u["text"], body)]
+    else:
+        dropped = [{"i": u["i"], "text": u["text"]} for u in cands if not _covered(u["text"], body)]
+    src_len = len(_norm("".join(u["text"] for u in cands))) or 1
+    ratio = round(len(_norm(body)) / src_len, 2)
+    return {"by": by, "sections": secs, "report": report, "sensitive": sensitive, "dropped": dropped,
+            "ratio": ratio, "shrink_warn": by != "rule" and ratio < TEMPLATE.get("shrink_warn_ratio", 0.6)}
 
 
 # ── ② 抽出 ─────────────────────────────────────────────────

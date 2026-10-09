@@ -145,6 +145,25 @@ div[data-testid="stVerticalBlock"] > div {{ margin-bottom: 2px; }}
 .hq {{ display:flex; gap:8px; align-items:flex-start; background:#fff; border:1px solid #DDE3F6; border-radius:4px 14px 14px 14px;
        padding:8px 12px; margin:0 0 8px; font-size:14px; color:{INK}; line-height:1.6; }}
 .hq-i {{ flex:0 0 auto; }}
+/* 録音：押す場所が分かるように、マイクのボタンを大きな赤い丸に（変更記録 CH-48） */
+.rec-need {{ background:#F4F5F7; border:1px dashed #C9CDD3; border-radius:8px; padding:10px 12px; font-size:13px; color:#55595F; }}
+.rec-steps {{ font-size:12.5px; color:{INK}; line-height:1.7; margin:2px 0 8px; }}
+.rec-steps b {{ color:#B3261E; }}
+.st-key-rec_box [data-testid="stAudioInput"] > div {{ border:2px solid #E3A6A1; background:#FFF6F5; border-radius:12px; min-height:76px; align-items:center; }}
+.st-key-rec_box [data-testid="stAudioInputActionButton"] {{ width:54px; height:54px; border-radius:50%; background:#D93025; color:#fff;
+       box-shadow:0 2px 6px rgba(217,48,37,.35); }}
+.st-key-rec_box [data-testid="stAudioInputActionButton"]:hover {{ background:#B3261E; color:#fff; }}
+.st-key-rec_box [data-testid="stAudioInputActionButton"] svg {{ width:28px; height:28px; }}
+.st-key-rec_box [data-testid="stAudioInputActionButton"][aria-label*="Stop"] {{ background:#3C4043; box-shadow:none; }}
+/* 取り込んだ面談の記録を日報の型に整えた案（変更記録 CH-48） */
+.ir {{ display:flex; gap:10px; background:#fff; border:1px solid #DDE3F6; border-radius:8px; padding:7px 12px; margin:0 0 6px;
+       font-size:14px; color:{INK}; line-height:1.6; }}
+.ir b {{ flex:0 0 9.5em; color:#2B3A78; font-size:12.5px; padding-top:2px; }}
+.sv {{ display:flex; flex-direction:column; gap:2px; border-left:3px solid #C9A227; background:#FBF5E0; border-radius:0 6px 6px 0;
+       padding:6px 10px; margin:8px 0 4px; }}
+.sv-l {{ font-size:12px; font-weight:700; color:#806300; }}
+.sv-t {{ font-size:13.5px; color:{INK}; }}
+.sv-n {{ font-size:11.5px; color:#6B6B6B; }}
 /* 面談メモ履歴：1 件 1 行、押すと全文 */
 details.ml {{ border-top:1px solid #F1F2F4; }}
 details.ml:first-of-type {{ border-top:none; }}
@@ -609,7 +628,7 @@ def run_demo(i):
     if activity:
         st.session_state["rp_activity"] = activity
     st.session_state["rp_text"] = text
-    st.session_state.pop("ai_suggest", None)
+    st.session_state.pop("intake", None)
 
 
 def reset_all():
@@ -832,44 +851,177 @@ def show_reaction(r):
 ACTIVITIES = ["定例訪問", "決算説明", "資金のご相談", "着任・ご挨拶", "支店長同行", "その他"]
 
 
-BY_LABEL = {"llm": "AI", "llm-sim": "AI（このデモでは用意した結果で模擬）", "rule": "言い回しの置き換え（AI のキーが無いときの簡易版）"}
+BY_LABEL = {"llm": "AI", "llm-sim": "AI（このデモでは用意した結果で模擬）", "rule": "ルールで項目に分けた（AI のキーが無いときの簡易版）"}
+SOURCE_LABEL = {"rec": "🎤 録音", "audio": "🎞 音声・動画ファイル", "text": "📄 テキスト", "sample": "🧪 デモ用サンプル", "manual": "✍️ 書いた業務報告"}
 
 
-def on_voice(company_id):
-    """🎤 録音が終わったら文字起こしして、業務報告の後ろに足す（変更記録 CH-44）"""
+# ── 面談の記録を取り込んで、日報の型に整える（変更記録 CH-48） ──────────────
+#   どの入口から入っても intake（tsumugu.intake）を通り、確認の画面に出る。業務報告に入れるかは担当者が決める。
+#   録音ファイル・書き起こしの全文は保存しない（セッションの中だけで使い、入れた文だけが SFA に登録される）
+def _consented(company_id):
+    if st.session_state.get(f"consent_{company_id}"):
+        return True
+    st.session_state["flash_warn"] = "先に「お客さまの了承を得て録音・記録しています」にチェックしてください"
+    return False
+
+
+def _run_intake(company_id, text, source):
+    staff_names = [x["name"].split()[0] for x in staff]
+    res = tsumugu.intake(text, company_id, staff_names)
+    if not res:
+        st.session_state["flash_warn"] = "取り込んだ記録に文がありませんでした"
+        return
+    for x in res["sensitive"]:
+        x["decided"] = None
+    st.session_state["intake"] = {"company_id": company_id, "source": source, **res}
+    kinds = {}
+    for x in res["sensitive"]:
+        kinds[x["treatment"]] = kinds.get(x["treatment"], 0) + 1
+    # 監査ログには「機微情報の印が付いた」事実だけを残し、中身は残さない
+    db.log_audit(me, "intake", company_id, f"source={source} by={res['by']} sensitive={kinds or 0} dropped={len(res['dropped'])}")
+
+
+def on_record(company_id):
     key = f"rp_audio_{company_id}_{st.session_state.get('audio_n', 0)}"
     audio = st.session_state.get(key)
-    if not audio:
+    if not audio or not _consented(company_id):
         return
     res = tsumugu.transcribe(audio.getvalue(), company_id)
     st.session_state["audio_n"] = st.session_state.get("audio_n", 0) + 1       # 録音欄を空に戻す
     if not res:
-        st.session_state["flash_warn"] = ("このデモでは、音声の文字起こしはカナイ精工・太田電装・ヤマト化成だけ模擬しています。"
+        st.session_state["flash_warn"] = ("このデモでは、録音の文字起こしはカナイ精工・太田電装・ヤマト化成だけ模擬しています。"
                                           "AI（OpenAI）のキーを設定すると、どの取引先でも実際に文字起こしします")
         return
-    cur = st.session_state.get("rp_text", "").strip()
-    st.session_state["rp_text"] = (cur + "\n" + res["text"]) if cur else res["text"]
-    st.session_state["flash_info"] = f"🎤 話した内容を文字に起こして、業務報告に入れました（{BY_LABEL[res['by']]}）。確認・修正してから登録してください"
+    _run_intake(company_id, res["text"], "rec")
+
+
+def on_audio_file(company_id):
+    key = f"rp_file_{company_id}_{st.session_state.get('file_n', 0)}"
+    f = st.session_state.get(key)
+    if not f or not _consented(company_id):
+        return
+    st.session_state["file_n"] = st.session_state.get("file_n", 0) + 1
+    if f.size > tsumugu.AUDIO_LIMIT_MB * 1024 * 1024:
+        st.session_state["flash_warn"] = (f"ファイルが大きすぎます（{f.size / 1024 / 1024:.0f}MB）。{tsumugu.AUDIO_LIMIT_MB}MB までです。"
+                                          "Zoom・Teams の録画なら、音声だけのファイル（m4a）か、文字起こしのファイル（vtt）を使ってください")
+        return
+    res = tsumugu.transcribe(f.getvalue(), company_id, filename=f.name, meeting=True)
+    if not res:
+        st.session_state["flash_warn"] = ("このデモでは、ファイルの文字起こしはカナイ精工だけ模擬しています。"
+                                          "AI（OpenAI）のキーを設定すると、実際に文字起こしします")
+        return
+    _run_intake(company_id, res["text"], "audio")
+
+
+def on_text_file(company_id):
+    key = f"rp_tfile_{company_id}_{st.session_state.get('tfile_n', 0)}"
+    f = st.session_state.get(key)
+    if not f:
+        return
+    st.session_state["tfile_n"] = st.session_state.get("tfile_n", 0) + 1
+    _run_intake(company_id, tsumugu.read_transcript(f.name, f.getvalue()), "text")
+
+
+def on_sample(company_id, path):
+    _run_intake(company_id, path.read_text(encoding="utf-8"), "sample")
 
 
 def on_tidy(company_id):
-    """✨ AI で整える：整理案を出すだけ。置き換えるかは担当者が決める（AI が書いた日報がそのまま SFA に入ることはない）"""
-    res = tsumugu.tidy_report(st.session_state.get("rp_text", ""), company_id)
-    if not res:
-        st.session_state["flash_warn"] = "業務報告が空です。先に書くか、🎤 で話してください"
+    """✨ AI で整える：書いた業務報告も、取り込みと同じ流れで日報の型に整えた案を出す。置き換えるかは担当者が決める"""
+    text = st.session_state.get("rp_text", "").strip()
+    if not text:
+        st.session_state["flash_warn"] = "業務報告が空です。先に書くか、📥 から取り込んでください"
         return
-    st.session_state["ai_suggest"] = {"company_id": company_id, **res}
+    _run_intake(company_id, text, "manual")
 
 
-def apply_tidy():
-    sug = st.session_state.pop("ai_suggest", None)
-    if sug:
-        st.session_state["rp_text"] = sug["text"]
-        st.session_state["flash_info"] = "AI の整理案で置き換えました。確認・修正してから登録してください"
+def _intake_add(section, text):
+    it = st.session_state.get("intake")
+    if it:
+        it["sections"].setdefault(section, []).append(text)
+        it["report"] = tsumugu.format_report(it["sections"])
 
 
-def close_tidy():
-    st.session_state.pop("ai_suggest", None)
+def restore_dropped(i):
+    it = st.session_state.get("intake")
+    hit = next((d for d in it["dropped"] if d["i"] == i), None) if it else None
+    if hit:
+        it["dropped"].remove(hit)
+        _intake_add("その他", hit["text"])
+
+
+def decide_sensitive(i, decision):
+    """ask の文：include（日報に入れる）／exclude（外す）。route_hq の文：route（本部に直接伝える）"""
+    it = st.session_state.get("intake")
+    x = next((x for x in it["sensitive"] if x["i"] == i), None) if it else None
+    if not x:
+        return
+    x["decided"] = decision
+    if decision == "include":                                 # お客さまの言葉として、言い回しはそのまま残す
+        _intake_add("気になった変化", f"「{x['text'].rstrip('。')}」との話があった。")
+    if decision == "route":
+        hq = tsumugu.SENSITIVE.get("hq_staff", "E007")
+        db.insert_consultation(me, hq, it["company_id"], "（日報には残さないご相談）社長から直接伺ったお話について、お時間をいただきたいです",
+                               at=TODAY.isoformat())
+        db.log_audit(me, "consult_request", it["company_id"], f"to={hq} sensitive_route")      # 中身は残さない
+    db.log_audit(me, "sensitive_decided", it["company_id"], f"{x['category']}:{decision}")
+
+
+def apply_intake():
+    it = st.session_state.pop("intake", None)
+    if it:
+        st.session_state["rp_text"] = it["report"]
+        st.session_state["flash_info"] = "整えた案を業務報告に入れました。確認・修正してから登録してください（取り込んだ記録の全文は保存していません）"
+
+
+def close_intake():
+    st.session_state.pop("intake", None)
+
+
+def intake_panel(company_id):
+    it = st.session_state.get("intake")
+    if not it or it["company_id"] != company_id:
+        return
+    with st.container(key="intake_panel"):
+        body = "".join(f"<div class='ir'><b>{escape(n)}</b><span>{escape(''.join(it['sections'][n]))}</span></div>"
+                       for n in tsumugu.TEMPLATE.get("order", []) if it["sections"].get(n))
+        st.markdown(f"<div class='hint'><div class='hint-h'><span class='hint-t'>日報の型に整えた案</span><span class='hint-tag'>✨ AI のヒント</span></div>"
+                    f"<div class='hint-n'>{escape(SOURCE_LABEL.get(it['source'], ''))} から。{escape(BY_LABEL[it['by']])}。"
+                    f"要約はしていません。元の文を項目に並べ替えています。業務報告に入れるかはあなたが決めます</div>{body}</div>",
+                    unsafe_allow_html=True)
+        if it["shrink_warn"]:
+            st.warning(f"元の記録より大幅に短くなっています（約 {int(it['ratio'] * 100)}%）。下の「外した文」を確かめてください")
+        if it["sensitive"]:
+            with st.container(border=True):
+                st.markdown(f"**🔒 取り扱いに注意する内容（{len(it['sensitive'])} 件）— 日報からは外しています**")
+                st.caption("AI と辞書で見つけたものです。見落としもありうるので、最後はあなたが確かめてください")
+                for x in it["sensitive"]:
+                    how = "辞書で検出" if x["method"] == "rule" else "AI が検出"
+                    st.markdown(f"<div class='sv'><span class='sv-l'>{escape(x['label'])}</span>"
+                                f"<span class='sv-t'>「{escape(x['text'])}」</span>"
+                                f"<span class='sv-n'>{escape(tsumugu.SENSITIVE['treatments'][x['treatment']])}（{how}：{escape(x['reason'])}）</span></div>",
+                                unsafe_allow_html=True)
+                    if x["treatment"] == "route_hq":
+                        if x["decided"] == "route":
+                            st.caption("✅ 本部（事業承継支援室）に相談を送りました。内容は日報にもログにも残していません")
+                        else:
+                            st.button("本部（事業承継支援室）に直接伝える", key=f"sv_route_{x['i']}", on_click=decide_sensitive, args=(x["i"], "route"))
+                    elif x["treatment"] == "ask":
+                        if x["decided"]:
+                            st.caption("✅ 日報に入れました（「気になった変化」）" if x["decided"] == "include" else "✅ 日報から外しました")
+                        else:
+                            k1, k2, _ = st.columns([1, 1, 3], gap="small")
+                            k1.button("日報に入れる", key=f"sv_in_{x['i']}", on_click=decide_sensitive, args=(x["i"], "include"), width="stretch")
+                            k2.button("外す", key=f"sv_out_{x['i']}", on_click=decide_sensitive, args=(x["i"], "exclude"), width="stretch")
+        if it["dropped"]:
+            with st.expander(f"整えるときに外した文（{len(it['dropped'])} 件）— 必要なら戻せます"):
+                for d in it["dropped"]:
+                    d1, d2 = st.columns([5, 1], gap="small", vertical_alignment="center")
+                    d1.caption(d["text"])
+                    d2.button("戻す", key=f"dr_{d['i']}", on_click=restore_dropped, args=(d["i"],), width="stretch")
+        a1, a2, _ = st.columns([2, 1, 2.5], gap="small")
+        a1.button("この内容で業務報告に入れる", on_click=apply_intake, type="primary", width="stretch")
+        a2.button("閉じる", on_click=close_intake, width="stretch")
 
 
 def on_save_draft(company_id):
@@ -899,7 +1051,7 @@ def register(company_id):
         st.session_state["result"] = tsumugu.run(post)
     db.delete_draft(company_id, me)
     st.session_state["rp_text"] = ""
-    st.session_state.pop("ai_suggest", None)
+    st.session_state.pop("intake", None)
 
 
 def page_report():
@@ -927,25 +1079,47 @@ def page_report():
                      format_func=lambda i: next(f"{k['name']}（{k['role']}）" for k in contacts if k["id"] == i))
         c2.selectbox("活動区分", ACTIVITIES, key="rp_activity")
         c3.date_input("訪問日", key="rp_date")
-        st.text_area("業務報告", key="rp_text", height=110,
+        st.text_area("業務報告", key="rp_text", height=150,
                      placeholder="例：定例訪問。受注状況を確認。前年並みとのこと。設備更新の件はその後進展なし。")
-        # 入力の補助：🎤 音声で入力／✨ AI で整える／💾 下書き保存（変更記録 CH-44）
-        b1, b2, b3, _ = st.columns([1.2, 1.2, 1.1, 1.5], gap="small")
-        with b1.popover("🎤 音声で入力", width="stretch"):
-            st.caption("録音ボタンを押して話し、終わったらもう一度押します。話した内容を文字に起こして、業務報告に入れます")
-            st.audio_input("録音", key=f"rp_audio_{company_id}_{st.session_state.get('audio_n', 0)}",
-                           on_change=on_voice, args=(company_id,), label_visibility="collapsed")
+        # 入力の補助：📥 取り込む／✨ AI で整える／💾 下書き保存（変更記録 CH-44・CH-48）
+        b1, b2, b3, _ = st.columns([1.5, 1.2, 1.1, 1.2], gap="small")
+        with b1.popover("📥 面談の記録を取り込む", width="stretch"):
+            st.caption("録音・ファイル・文字起こしを取り込み、日報の型に整えた案を出します。録音ファイルと書き起こしの全文は保存しません")
+            st.checkbox("お客さまの了承を得て、録音・記録しています", key=f"consent_{company_id}")
+            ok = st.session_state.get(f"consent_{company_id}", False)
+            t1, t2, t3, t4 = st.tabs(["🎤 録音", "🎞 音声・動画", "📄 テキスト", "🧪 サンプル"])
+            need = "<div class='rec-need'>☝️ 上の「お客さまの了承を得て、録音・記録しています」にチェックを入れると使えます</div>"
+            with t1:
+                if not ok:
+                    st.markdown(need, unsafe_allow_html=True)
+                else:
+                    st.markdown("<div class='rec-steps'><b>① 赤いマイクのボタンを押す</b>と録音が始まります　"
+                                "<b>② 話し終えたら、もう一度押して</b>止めます　"
+                                "<b>③</b> 止めると文字に起こし、日報の型に整えた案を出します</div>", unsafe_allow_html=True)
+                    with st.container(key="rec_box"):
+                        st.audio_input("録音", key=f"rp_audio_{company_id}_{st.session_state.get('audio_n', 0)}",
+                                       on_change=on_record, args=(company_id,), label_visibility="collapsed")
+            with t2:
+                st.caption(f"Zoom・Teams などの録音・録画（{'・'.join(tsumugu.AUDIO_TYPES)}、{tsumugu.AUDIO_LIMIT_MB}MB まで）")
+                if not ok:
+                    st.markdown(need, unsafe_allow_html=True)
+                else:
+                    st.file_uploader("音声・動画ファイル", type=tsumugu.AUDIO_TYPES, label_visibility="collapsed",
+                                     key=f"rp_file_{company_id}_{st.session_state.get('file_n', 0)}", on_change=on_audio_file, args=(company_id,))
+            with t3:
+                st.caption("文字起こしのファイル（txt・md、Zoom・Teams の vtt）")
+                st.file_uploader("テキスト", type=tsumugu.TEXT_TYPES, label_visibility="collapsed",
+                                 key=f"rp_tfile_{company_id}_{st.session_state.get('tfile_n', 0)}", on_change=on_text_file, args=(company_id,))
+            with t4:
+                samples = tsumugu.meeting_samples(company_id)
+                st.caption("デモ用に用意した面談の書き起こし（架空）です" if samples else "この取引先のサンプルはありません（カナイ精工にあります）")
+                for pth in samples:
+                    st.button(f"{pth.suffix[1:]}：{pth.stem.split('_', 1)[1]}", key=f"smp_{pth.name}", on_click=on_sample,
+                              args=(company_id, pth), width="stretch")
         b2.button("✨ AI で整える", on_click=on_tidy, args=(company_id,), width="stretch",
-                  help="言いよどみなどを除いて、報告の文に整えた案を出します。置き換えるかはあなたが決めます")
+                  help="書いた業務報告を、日報の型に整えた案を出します。要約はしません。置き換えるかはあなたが決めます")
         b3.button("💾 下書き保存", on_click=on_save_draft, args=(company_id,), width="stretch")
-        sug = st.session_state.get("ai_suggest")
-        if sug and sug["company_id"] == company_id:
-            st.markdown(f"<div class='hint'><div class='hint-h'><span class='hint-t'>AI の整理案</span><span class='hint-tag'>✨ AI のヒント</span></div>"
-                        f"<div class='hint-n'>{escape(BY_LABEL[sug['by']])}。書かれていない事実は足していません。置き換えるかはあなたが決めます</div>"
-                        f"<div class='hq'><span>{escape(sug['text'])}</span></div></div>", unsafe_allow_html=True)
-            a1, a2, _ = st.columns([2, 1, 2.5], gap="small")
-            a1.button("この内容で置き換える", on_click=apply_tidy, type="primary", width="stretch")
-            a2.button("閉じる", on_click=close_tidy, width="stretch")
+        intake_panel(company_id)
         for k, fn in (("flash_warn", st.warning), ("flash_info", st.info)):
             if st.session_state.get(k):
                 fn(st.session_state.pop(k))
