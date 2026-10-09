@@ -266,20 +266,42 @@ def _clean_line(line):
     return re.sub(r"<[^>]*>", "", s).strip()
 
 
+def _split_headings(line):
+    """行の中の【項目名】（日報の型の見出し。重なっていても、行の途中にあっても）で区切り、[(項目名, 文)] を返す。
+    すでに整えた日報をもう一度整えるとき、見出しを文として読まず、置かれていた項目の目印にする（変更記録 CH-53）"""
+    legacy = TEMPLATE.get("legacy", {})                 # 以前の型の見出し（聞いた事実 など）は、今の項目に読み替える（CH-56）
+    names = list(TEMPLATE.get("order", [])) + list(legacy)
+    if not names:
+        return [(None, line)]
+    parts = re.split("(" + "|".join(re.escape(f"【{n}】") for n in names) + ")", line)
+    out, hint = [], None
+    for p in parts:
+        if p.startswith("【") and p[1:-1] in names:
+            hint = legacy.get(p[1:-1], p[1:-1])
+        elif p.strip():
+            out.append((hint, p.strip()))
+    return out
+
+
 def split_units(text, staff_names=()):
-    """書き起こし → 文の単位 [{i, speaker, staff, raw, text}]。行頭の「名前：」を話者として読む。
-    text は報告の書き言葉に整えた文、raw は元の話し言葉（あいさつ・相づちの判定に使う）"""
-    units = []
-    for line in (text or "").splitlines():
+    """書き起こし → 文の単位 [{i, speaker, staff, raw, text, hint}]。行頭の「名前：」を話者として読む。
+    text は報告の書き言葉に整えた文、raw は元の話し言葉（あいさつ・相づちの判定に使う）、
+    hint は日報の型の見出しの下にあった文の項目名（担当者が置いた項目をそのまま尊重する。見出しの無い次の行にも引き継ぐ）、
+    para は見出しの下の段落の番号（整え済みの日報の段落の切れ目を保つため）"""
+    units, current = [], None
+    for n, line in enumerate((text or "").splitlines()):
         line = _clean_line(line)
         if not line:
             continue
         m = SPEAKER.match(line)
         speaker, body = (m.group(1), m.group(2)) if m else ("", line)
         staff = (not speaker) or "メモ" in speaker or "担当" in speaker or any(n and n in speaker for n in staff_names)
-        for sent in re.findall(r"[^。！？]+[。！？]?", body):
-            if sent.strip(" 、"):
-                units.append({"i": len(units), "speaker": speaker, "staff": staff, "raw": sent.strip(), "text": _tidy_sentence(sent)})
+        for hint, seg in _split_headings(body):
+            current = hint or current
+            for sent in re.findall(r"[^。！？]+[。！？]?", seg):
+                if sent.strip(" 、"):
+                    units.append({"i": len(units), "speaker": speaker, "staff": staff, "raw": sent.strip(), "text": _tidy_sentence(sent),
+                                  "hint": current, "para": (n, current) if current else None})
     return units
 
 
@@ -327,28 +349,35 @@ def _covered(sentence, out_text, threshold=0.3):
 
 
 def _section_of(u):
+    if u.get("hint"):                                   # 見出しの下にあった文は、その項目のまま
+        return u["hint"]
     for sec in TEMPLATE.get("sections", []):
         if any(p in u["text"] for p in sec["patterns"]):
             return sec["name"]
-    return "その他"
+    return TEMPLATE.get("default", "内容")
 
 
 def _structure_llm(cands):
     names = TEMPLATE.get("order", [])
-    system = ("地方銀行の法人担当者の面談記録を、日報の項目に並べ替える。要約はしない。原文の文をできるだけそのまま使い、"
+    system = ("地方銀行の法人担当者の面談記録を、日報の項目に整える。型にしすぎない。要約はしない。原文の文をできるだけそのまま使い、"
               "話し言葉は報告の書き言葉（だ・である調、体言止め可）に直す（「〜ね」「〜よ」「〜かな」「えーと」などは外す）。文体を整えるのは要約ではない。"
               "削ってよいのは言いよどみ・重複だけ。"
               "「らしい」「雑談で」などの伝聞の言い回しは必ず残す。書かれていない事実は足さない。お客さまの大事な発言は「」で引用のまま残す。"
-              f"項目は {'・'.join(names)} のどれか。どれにも入らない文は「その他」に入れ、捨てない。"
-              '出力は JSON のみ: {"sections":[{"name":"<項目>","items":[{"text":"<文>","from":[<元の番号>]}]}]}')
-    data = llm_chat(system, "\n".join(f"[{u['i']}]（{'担当者' if u['staff'] else 'お客さま'}）{u['text']}" for u in cands), want_json=True)
+              f"項目は {'・'.join(names)} のどれか。どれにも入らない文は「内容」に入れ、捨てない。"
+              "「内容」は、商談の話題ごとに段落を分ける程度にとどめる（小見出しや決まった分類は付けない。段落の頭で「〇〇事業は、」のように自然な文で話題を示す）。"
+              "「気になる点」は予兆につながりそうな変化や違和感、「次回話したいこと」は次の訪問で話したい・確かめたいこと、"
+              "「注意すること」は断られた提案・触れてはいけない話題など次の担当者への申し送りで、話に出たときだけ入れる。"
+              '出力は JSON のみ: {"sections":[{"name":"<項目>","paragraphs":[{"text":"<段落>","from":[<元の番号>]}]}]}')
+    system += "（今の項目：…）が付いた文は、担当者がすでにその項目に置いた文なので、明らかな誤りでない限り同じ項目に入れる。"
+    data = llm_chat(system, "\n".join(f"[{u['i']}]（{'担当者' if u['staff'] else 'お客さま'}）"
+                                       + (f"（今の項目：{u['hint']}）" if u.get("hint") else "") + u["text"] for u in cands), want_json=True)
     if not data:
         return None
     secs, used = {}, set()
     for s in data.get("sections", []):
         if s.get("name") not in names:
             continue
-        for it in s.get("items", []):
+        for it in s.get("paragraphs", s.get("items", [])):
             if (it.get("text") or "").strip():
                 secs.setdefault(s["name"], []).append(it["text"].strip())
                 used |= {i for i in it.get("from", []) if isinstance(i, int)}
@@ -367,22 +396,26 @@ def _sample_sections(company_id, text):
 
 
 def format_report(sections):
-    """項目 → 業務報告の文（項目ごとに 1 行、【項目】で始める）"""
+    """項目 → 業務報告の文。項目は【項目】で始め、段落ごとに改行する（「内容」の話題の切れ目）"""
     order = TEMPLATE.get("order", [])
-    return "\n".join(f"【{n}】" + "".join(sections[n]) for n in order if sections.get(n))
+    return "\n".join(f"【{n}】" + "\n".join(sections[n]) for n in order if sections.get(n))
 
 
-def intake(text, company_id=None, staff_names=(), use_llm=True, progress=None):
+def intake(text, company_id=None, staff_names=(), use_llm=True, progress=None, keep_ask=False):
     """面談の記録（書き起こし・手書き）→ 日報の型に整えた案と、確認してほしいもの（変更記録 CH-48）
     返す dict のキー: by（llm | llm-sim | rule）, sections{項目: [文]}, report, sensitive[], dropped[{i, text}],
       ratio（整えた本文 ÷ 元の本文の文字数）, shrink_warn
-    progress(段階) を渡すと、段階ごとに呼ぶ（画面に処理中の段階を出すため。sensitive → structure）"""
+    progress(段階) を渡すと、段階ごとに呼ぶ（画面に処理中の段階を出すため。sensitive → structure）
+    keep_ask=True（担当者が書いた業務報告を整えるとき）は、「担当者が判断する」種類（体調の変化など）を外さずにそのまま残す。
+    本人がすでに入れると決めた文を、整えるたびに聞き直さないため（変更記録 CH-54）"""
     step = progress or (lambda name: None)
     units = split_units(text, staff_names)
     if not units:
         return None
     step("sensitive")
     sensitive = screen_sensitive(units, use_llm=use_llm)
+    if keep_ask:
+        sensitive = [x for x in sensitive if x["treatment"] != "ask"]
     step("structure")
     flagged = {s["i"] for s in sensitive}
     cands = [u for u in units if u["i"] not in flagged and not _skip(u)]
@@ -395,10 +428,13 @@ def intake(text, company_id=None, staff_names=(), use_llm=True, progress=None):
         sample = _sample_sections(company_id, text)
         if sample:
             secs, by = {k: list(v) for k, v in sample.items()}, "llm-sim"
-    if secs is None:
-        secs = {}
+    if secs is None:                                    # ルール：項目ごとに 1 段落。整え済みの日報なら段落の切れ目を保つ
+        paras = {}
         for u in cands:
-            secs.setdefault(_section_of(u), []).append(u["text"])
+            paras.setdefault((_section_of(u), u.get("para")), []).append(u["text"])
+        secs = {}
+        for (sec, _), sents in paras.items():
+            secs.setdefault(sec, []).append("".join(sents))
         used = {u["i"] for u in cands}
     report = format_report(secs)
     body = "".join("".join(v) for v in secs.values())
